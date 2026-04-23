@@ -1,0 +1,172 @@
+/* ===== WHY CHOOSE MANYPROP – Matches Reference Image ===== */
+.why-choose { background: #fff; }
+
+.why-choose-dark {
+    background: #111111;
+    padding: 40px 0 38px;
+}
+
+.why-choose-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.why-choose-left { flex: 1; min-width: 280px; }
+
+.why-choose-title {
+    color: white;
+    font-size: 1.7rem;
+    font-weight: 800;
+    margin: 0 0 28px 0;
+    letter-spacing: -0.02em;
+}
+
+.why-choose-title .highlight {
+    color: #e85c27;
+    font-style: normal;
+}
+
+/* Three feature icons in a row */
+.features-row {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+}
+
+.feature-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+}
+
+.feature-icon-circle {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: 1.5px solid rgba(255,255,255,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.feature-item:hover .feature-icon-circle {
+    background: rgba(255,255,255,0.2);
+}
+
+.feature-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.feature-title {
+    color: white;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.feature-subtitle {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.78rem;
+    font-weight: 400;
+}
+
+/* ── Right CTA Banner ── */
+.why-choose-right { flex-shrink: 0; }
+
+.cta-banner {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 14px;
+    padding: 22px 28px;
+    transition: border-color 0.2s;
+    min-width: 340px;
+}
+
+.cta-banner:hover { border-color: rgba(255,255,255,0.28); }
+
+.cta-text {
+    display: flex;
+    flex-direction: column;
+    color: white;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.cta-highlight {
+    color: #e85c27;
+    font-weight: 700;
+}
+
+.cta-subtext {
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.6);
+    font-weight: 400;
+}
+
+.cta-post-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    background: white;
+    color: #0a0a0a;
+    border: none;
+    border-radius: 999px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.22s ease;
+    font-family: 'Inter', sans-serif;
+    flex-shrink: 0;
+}
+
+.cta-post-btn:hover {
+    background: #f0f0f0;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+}
+
+.cta-free-badge {
+    background: #16a34a;
+    color: white;
+    font-size: 0.6rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .why-choose-dark { padding: 28px 0 24px; }
+    .why-choose-content { flex-direction: column; align-items: flex-start; gap: 22px; }
+    .features-row { gap: 20px; }
+    .feature-item { flex-direction: row; text-align: left; gap: 12px; }
+    .cta-banner { flex-direction: column; text-align: center; gap: 16px; min-width: unset; width: 100%; }
+    .cta-text { align-items: center; }
+    .cta-post-btn { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 480px) {
+    .why-choose-title { font-size: 1.35rem; }
+    .features-row { gap: 14px; }
+}

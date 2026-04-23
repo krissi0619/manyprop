@@ -1,0 +1,137 @@
+/* ===== SHARED PROPERTY SECTION STYLES ===== */
+
+/* Section Header */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 2rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  margin: 0 !important;
+  text-transform: none !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.2 !important;
+}
+
+.section-title .highlight {
+  color: #ea580c;
+  font-style: italic;
+}
+
+.view-all-btn {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.22s ease;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.view-all-btn:hover {
+  color: #0a0a0a;
+}
+
+/* Scrollable Carousel Container */
+.properties-carousel-wrapper {
+  position: relative;
+}
+
+.properties-scroll-container {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 4px 4px 12px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.properties-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+.properties-scroll-container .property-card {
+  min-width: 360px;
+  max-width: 360px;
+}
+
+/* Arrow Buttons */
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-60%);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: white;
+  border: 1.5px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.10);
+  transition: all 0.25s ease;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.carousel-arrow:hover {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: white;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.carousel-arrow.left {
+  left: -18px;
+}
+
+.carousel-arrow.right {
+  right: -18px;
+}
+
+/* Sections */
+.recommended-properties,
+.trending-properties {
+  padding: 36px 0 20px;
+  background: #fff;
+}
+
+/* ── Responsive ────────────────────────────────────── */
+@media (max-width: 768px) {
+  .section-title { font-size: 1.4rem !important; }
+  .section-header { margin-bottom: 14px; }
+
+  .recommended-properties,
+  .trending-properties { padding: 24px 0 14px; }
+
+  .properties-scroll-container .property-card {
+    min-width: 280px;
+    max-width: 280px;
+  }
+
+  /* Hide arrows on touch devices – use swipe */
+  .carousel-arrow { display: none; }
+}
+
+@media (max-width: 480px) {
+  .section-title { font-size: 1.15rem !important; }
+
+  .properties-scroll-container .property-card {
+    min-width: 240px;
+    max-width: 240px;
+  }
+}

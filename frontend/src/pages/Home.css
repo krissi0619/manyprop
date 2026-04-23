@@ -1,0 +1,14 @@
+.home {
+  background: #fff;
+}
+
+/* Override container for section padding */
+.home .section {
+  padding: 40px 0;
+}
+
+@media (max-width: 768px) {
+  .home .section {
+    padding: 28px 0;
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "manyprop",
+  "version": "1.0.0",
+  "description": "MERN stack real estate website - ManyProp",
+  "main": "server.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd backend && npm run dev",
+    "client": "cd frontend && npm start",
+    "server-install": "cd backend && npm install",
+    "client-install": "cd frontend && npm install",
+    "install-all": "npm run server-install && npm run client-install",
+    "build": "cd frontend && npm run build",
+    "heroku-postbuild": "npm run client-install && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/username/manyprop.git"
+  },
+  "keywords": [
+    "real-estate",
+    "mern",
+    "react",
+    "node",
+    "mongodb",
+    "express"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  }
+}

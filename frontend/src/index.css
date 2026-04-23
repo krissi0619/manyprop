@@ -1,0 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&display=swap');
+
+/* ── Design Tokens ─────────────────────────────────── */
+:root {
+  --black:       #0a0a0a;
+  --rich-black:  #111111;
+  --charcoal:    #1e1e1e;
+  --dark-grey:   #2c2c2c;
+  --mid-grey:    #555555;
+  --light-grey:  #999999;
+  --border:      #e5e5e5;
+  --surface:     #f5f5f5;
+  --white:       #ffffff;
+  --accent:      #e85c27;   /* primary brand orange */
+  --accent-red:  #e85c27;   
+  --accent-gold: #c9a96e;   /* subtle gold for highlights */
+  --radius-sm:   6px;
+  --radius-md:   12px;
+  --radius-lg:   20px;
+  --radius-pill: 999px;
+  --shadow-sm:   0 1px 4px rgba(0,0,0,0.07);
+  --shadow-md:   0 4px 20px rgba(0,0,0,0.10);
+  --shadow-lg:   0 12px 40px rgba(0,0,0,0.14);
+}
+
+/* ── Reset ──────────────────────────────────────────── */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ── Base ───────────────────────────────────────────── */
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--white);
+  color: var(--black);
+  line-height: 1.6;
+  font-size: 19px;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+a { color: inherit; }
+img { display: block; max-width: 100%; }
+
+/* ── Layout ─────────────────────────────────────────── */
+.container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 60px; /* Provide a consistent margin */
+}
+
+/* ── Buttons ────────────────────────────────────────── */
+.btn {
+  padding: 11px 26px;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.01em;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--white);
+  box-shadow: 0 4px 14px rgba(232, 92, 39, 0.3);
+}
+
+.btn-primary:hover {
+  background: #d64a18;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(232, 92, 39, 0.4);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--accent);
+  border: 1.5px solid var(--accent);
+}
+
+.btn-secondary:hover {
+  background: var(--accent);
+  color: var(--white);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--mid-grey);
+  border: 1.5px solid var(--border);
+}
+
+.btn-outline:hover {
+  background: var(--surface);
+  border-color: var(--mid-grey);
+  color: var(--black);
+}
+
+/* ── Section headings shared ───────────────────────── */
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--light-grey);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 6px;
+}
+
+/* ── Scrollbar ──────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--light-grey); }
+
+/* ── Responsive ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  .container { padding: 0 16px; }
+}

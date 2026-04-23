@@ -1,0 +1,128 @@
+.dropdown-overlay {
+  position: fixed;
+  top: 70px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  z-index: 999;
+}
+
+.navigation-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 600px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-50%) translateY(-10px);
+  transition: all 0.3s ease;
+  border: 1px solid #e5e5e5;
+}
+
+.navigation-dropdown.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.dropdown-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  padding: 25px;
+}
+
+.dropdown-section {
+  min-width: 200px;
+}
+
+.dropdown-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 15px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #0a0a0a;
+}
+
+.dropdown-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dropdown-item {
+  margin-bottom: 8px;
+}
+
+.dropdown-link {
+  text-decoration: none;
+  color: #666;
+  font-size: 0.9rem;
+  padding: 6px 0;
+  display: block;
+  transition: color 0.3s ease;
+}
+
+.dropdown-link:hover {
+  color: #0a0a0a;
+}
+
+/* Arrow pointer */
+.navigation-dropdown::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid white;
+}
+
+.navigation-dropdown::after {
+  content: '';
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 9px solid #e5e5e5;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .navigation-dropdown {
+    min-width: 300px;
+    max-width: 90vw;
+    left: 10px;
+    transform: none;
+  }
+  
+  .navigation-dropdown.open {
+    transform: none;
+  }
+  
+  .navigation-dropdown::before,
+  .navigation-dropdown::after {
+    left: 30px;
+    transform: none;
+  }
+  
+  .dropdown-content {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 20px;
+  }
+}

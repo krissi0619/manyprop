@@ -1,0 +1,963 @@
+/* ===== LOGIN / REGISTER – Multi-step Modal Design ===== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+* { box-sizing: border-box; }
+
+/* ── Page wrapper ── */
+.login-page {
+  min-height: 100vh;
+  background: #1c1c1e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  font-family: 'Inter', sans-serif;
+  position: relative;
+}
+
+.login-page.profile-bg {
+  background: #f5f5f5;
+}
+
+/* Small breadcrumb label top-left */
+.step-label-overlay {
+  position: fixed;
+  top: 18px;
+  left: 22px;
+  color: #6b6b6b;
+  font-size: 0.76rem;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.02em;
+  z-index: 10;
+  text-transform: lowercase;
+}
+
+/* ── Card ── */
+.login-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 48px 56px 52px;
+  width: 100%;
+  max-width: 580px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  animation: cardIn 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.login-card.profile-card {
+  box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+  max-width: 560px;
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Card navigation row ── */
+.card-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.nav-back-btn {
+  background: none;
+  border: none;
+  color: #222;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Inter', sans-serif;
+  transition: color 0.18s;
+  letter-spacing: 0.01em;
+}
+
+.nav-back-btn:hover { color: #000; }
+
+.nav-close-btn {
+  background: none;
+  border: none;
+  color: #555;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.18s, transform 0.18s;
+  border-radius: 50%;
+}
+
+.nav-close-btn:hover {
+  color: #111;
+  transform: rotate(90deg);
+}
+
+/* ── Headings ── */
+.card-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #111;
+  margin: 0 0 10px 0;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+.card-subtitle {
+  font-size: 0.87rem;
+  color: #888;
+  margin: 0 0 26px 0;
+  line-height: 1.55;
+}
+
+/* ── Field label ── */
+.field-label {
+  display: block;
+  font-size: 0.81rem;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 8px;
+  letter-spacing: 0.01em;
+}
+
+/* ── Phone input with prefix ── */
+.phone-row {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #ddd;
+  border-radius: 100px;
+  overflow: hidden;
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.phone-row:focus-within {
+  border-color: #111;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+}
+
+.phone-prefix {
+  padding: 14px 12px 14px 20px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #111;
+  white-space: nowrap;
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.phone-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 16px 20px 16px 2px;
+  font-size: 0.98rem;
+  color: #111;
+  outline: none;
+  font-family: 'Inter', sans-serif;
+  min-width: 0;
+}
+
+.phone-input::placeholder { color: #c0c0c0; }
+
+/* ── Pill text input ── */
+.pill-input {
+  width: 100%;
+  padding: 16px 24px;
+  border: 1.5px solid #ddd;
+  border-radius: 100px;
+  font-size: 0.98rem;
+  color: #111;
+  background: #fff;
+  outline: none;
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.pill-input:focus {
+  border-color: #111;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+}
+
+.pill-input::placeholder { color: #c0c0c0; }
+
+/* ── Field group spacing ── */
+.field-group {
+  margin-bottom: 24px;
+}
+
+/* ── Primary CTA button ── */
+.btn-primary {
+  width: 100%;
+  padding: 15px 20px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 100px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.22s, transform 0.22s, box-shadow 0.22s;
+  margin-top: 6px;
+  letter-spacing: 0.01em;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #2a2a2a;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── "or" divider ── */
+.or-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 20px 0;
+  color: #bbb;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.or-divider::before,
+.or-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #ebebeb;
+}
+
+/* ── Google button ── */
+.btn-google {
+  width: 100%;
+  padding: 14px 20px;
+  border: 1.5px solid #ddd;
+  border-radius: 100px;
+  background: #fff;
+  color: #111;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-google:hover {
+  border-color: #bbb;
+  background: #fafafa;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+}
+
+/* ── "New User?" row ── */
+.new-user-row {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.85rem;
+  color: #777;
+}
+
+.new-user-row a {
+  color: #e8820c;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity 0.18s;
+}
+
+.new-user-row a:hover { opacity: 0.75; }
+
+/* ── Terms text ── */
+.terms-text {
+  text-align: center;
+  font-size: 0.77rem;
+  color: #aaa;
+  margin-top: 18px;
+  line-height: 1.55;
+}
+
+.terms-text a {
+  color: #e8820c;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.terms-text a:hover { text-decoration: underline; }
+
+/* ── Agent Yes/No toggle ── */
+.agent-question {
+  margin: 10px 0 16px;
+}
+
+.agent-label {
+  font-size: 0.81rem;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 12px;
+  display: block;
+  letter-spacing: 0.01em;
+}
+
+.agent-label .accent {
+  color: #e8820c;
+  font-weight: 700;
+}
+
+.agent-toggle {
+  display: flex;
+  gap: 12px;
+}
+
+.agent-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1.5px solid #ddd;
+  border-radius: 100px;
+  background: #fff;
+  color: #555;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.agent-btn.selected-yes {
+  border-color: #111;
+  color: #111;
+  background: #fff;
+}
+
+.agent-btn.selected-no {
+  border-color: #e8820c;
+  color: #e8820c;
+  background: #fff;
+}
+
+.agent-btn:not(.selected-yes):not(.selected-no):hover {
+  border-color: #bbb;
+}
+
+/* ── OTP grid (circular inputs) ── */
+.otp-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #111;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
+  text-align: center;
+}
+
+.otp-subtitle {
+  font-size: 0.87rem;
+  color: #888;
+  margin: 0 0 10px 0;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.otp-grid {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 28px 0 10px;
+}
+
+.otp-circle {
+  width: 58px;
+  height: 58px;
+  border: 2px solid #ddd;
+  border-radius: 50%;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #111;
+  background: #fff;
+  outline: none;
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Fix for input type=text centering */
+  line-height: 1;
+}
+
+.otp-circle:focus {
+  border-color: #111;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+}
+
+.otp-circle.filled {
+  border-color: #222;
+  background: #fff;
+}
+
+/* ── Dev OTP hint ── */
+.dev-otp-hint {
+  background: #f8f8f8;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 10px 16px;
+  text-align: center;
+  font-size: 0.81rem;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+/* ── Error box ── */
+.error-box {
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 11px 16px;
+  color: #dc2626;
+  font-size: 0.82rem;
+  margin-bottom: 12px;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* ── Profile avatar ── */
+.avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.avatar-circle-wrap {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  background: #e8e8e8;
+  border: 2px solid #ddd;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.2s;
+}
+
+.avatar-circle-wrap:hover { border-color: #bbb; }
+
+.avatar-circle-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder-icon {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.avatar-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.avatar-info h4 {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+}
+
+.update-img-btn {
+  background: none;
+  border: none;
+  color: #e8820c;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+  text-align: left;
+  transition: opacity 0.18s;
+}
+
+.update-img-btn:hover { opacity: 0.75; }
+
+/* ── Dropdown select pill ── */
+.select-pill {
+  width: 100%;
+  padding: 14px 20px;
+  border: 1.5px solid #ddd;
+  border-radius: 100px;
+  font-size: 0.92rem;
+  color: #111;
+  background: #fff;
+  outline: none;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='14' height='8' viewBox='0 0 14 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L7 7L13 1' stroke='%23555' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 20px center;
+  padding-right: 44px;
+  transition: border-color 0.2s;
+}
+
+.select-pill:focus {
+  border-color: #111;
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.06);
+}
+
+/* ── Responsive ── */
+@media (max-width: 580px) {
+  .login-card {
+    padding: 28px 24px 32px;
+    border-radius: 18px;
+  }
+
+  .card-title, .otp-title { font-size: 1.65rem; }
+
+  .otp-circle {
+    width: 46px;
+    height: 46px;
+    font-size: 1.15rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .otp-grid { gap: 6px; }
+  .otp-circle { width: 40px; height: 40px; font-size: 1rem; }
+}
+
+/* ── Preferences / Property-Details card (scrollable tall card) ── */
+.pref-card {
+  max-width: 420px;
+  max-height: 88vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #e0e0e0 transparent;
+  padding: 36px 36px 40px;
+}
+
+.pref-card::-webkit-scrollbar { width: 4px; }
+.pref-card::-webkit-scrollbar-track { background: transparent; }
+.pref-card::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+
+/* Subtitle for preferences */
+.pref-subtitle {
+  font-size: 0.84rem;
+  color: #888;
+  margin: 0 0 22px 0;
+  line-height: 1.55;
+}
+
+/* ── User-type badge (top-right of dark bg) ── */
+.pref-type-badge-bar {
+  position: fixed;
+  top: 18px;
+  right: 22px;
+  z-index: 10;
+}
+
+.pref-type-badge {
+  background: #fff;
+  color: #111;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  padding: 6px 16px;
+  border-radius: 100px;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+/* ── Property type chips (multiselect) ── */
+.prop-chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.prop-chip {
+  padding: 9px 18px;
+  border: 1.5px solid #ddd;
+  border-radius: 100px;
+  background: #fff;
+  color: #555;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.prop-chip:hover {
+  border-color: #bbb;
+  color: #333;
+}
+
+.prop-chip.active {
+  background: #111;
+  border-color: #111;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ── Secondary (outlined) button ── */
+.btn-secondary {
+  width: 100%;
+  padding: 14px 20px;
+  background: #fff;
+  color: #333;
+  border: 1.5px solid #ddd;
+  border-radius: 100px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+  margin-top: 10px;
+  letter-spacing: 0.01em;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: #aaa;
+  background: #fafafa;
+  transform: translateY(-1px);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── File upload area ── */
+.upload-area {
+  border: 2px dashed #ddd;
+  border-radius: 16px;
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: #fafafa;
+  color: #777;
+  font-size: 0.88rem;
+  font-family: 'Inter', sans-serif;
+  line-height: 1.6;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.upload-area:hover {
+  border-color: #bbb;
+  background: #f5f5f5;
+}
+
+.upload-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.upload-area p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.upload-area strong {
+  color: #111;
+  font-weight: 700;
+}
+
+.upload-done {
+  color: #16a34a;
+  font-weight: 600;
+  font-size: 0.88rem;
+  word-break: break-all;
+}
+
+/* ── Two-button row for Property Details ── */
+.prop-detail-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  align-items: center;
+}
+
+.prop-detail-actions .btn-secondary {
+  width: auto;
+  flex: 1;
+  margin-top: 0;
+}
+
+.prop-detail-actions .btn-primary {
+  flex: 1;
+  margin-top: 0;
+}
+
+/* ── Responsive pref card ── */
+@media (max-width: 580px) {
+  .pref-card {
+    padding: 26px 22px 32px;
+    max-height: 92vh;
+  }
+  .pref-type-badge-bar { top: 12px; right: 12px; }
+}
+
+/* ════════════════════════════════════════════
+   KYC Step Styles
+═══════════════════════════════════════════ */
+.kyc-card {
+  max-width: 440px;
+}
+
+.kyc-trust-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #111;
+  margin: 0 0 6px 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.kyc-trust-sub {
+  font-size: 0.82rem;
+  color: #888;
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.kyc-section-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 14px 0;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Each KYC verification row */
+.kyc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.kyc-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.kyc-row-label {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: #333;
+  font-family: 'Inter', sans-serif;
+}
+
+.kyc-row-value {
+  font-size: 0.78rem;
+  color: #888;
+}
+
+/* Inline input for aadhaar/pan inside KYC row */
+.kyc-inline-input {
+  border: none;
+  outline: none;
+  font-size: 0.78rem;
+  color: #888;
+  background: transparent;
+  font-family: 'Inter', sans-serif;
+  width: 100%;
+  padding: 0;
+}
+
+.kyc-inline-input::placeholder { color: #bbb; }
+
+/* Badge: Done (green) */
+.kyc-badge {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+}
+
+.kyc-badge.done {
+  background: #46a31d;
+  color: #fff;
+}
+
+/* Badge: Verify (orange) */
+.kyc-badge.verify {
+  background: #ea7a28;
+  color: #fff;
+}
+
+/* Clearance cert rows (owner) */
+.kyc-cert-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kyc-cert-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.84rem;
+  color: #444;
+  gap: 10px;
+  font-family: 'Inter', sans-serif;
+}
+
+.kyc-know-more-btn {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 100px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.18s;
+}
+
+.kyc-know-more-btn:hover { background: #333; }
+
+/* Project approvals list (developer) */
+.kyc-certs-subtitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #444;
+  margin: 0 0 10px 0;
+}
+
+.kyc-approvals-list {
+  margin: 0 0 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kyc-dev-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.kyc-dev-num {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #111;
+  font-family: 'Inter', sans-serif;
+  margin-top: 1px;
+}
+
+.kyc-dev-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.kyc-dev-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #111;
+  font-family: 'Inter', sans-serif;
+  margin-bottom: 2px;
+}
+
+.kyc-dev-desc {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: #000;
+  white-space: pre-wrap;
+}
+
+.kyc-upload {
+  border: 1px solid #666;
+  background: #fff;
+  border-radius: 12px;
+  min-height: 90px;
+}
+.kyc-upload:hover {
+  border-color: #111;
+  background: #fafafa;
+}
+
+.kyc-card .btn-secondary {
+  border: 1.2px solid #111;
+  color: #111;
+}
+
+.know-more-content {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  margin-top: 10px;
+}
+
+.know-more-content p {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111;
+  font-family: 'Inter', sans-serif;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.kyc-tooltip-popup {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 260px;
+  background: #fff;
+  border: 1px solid #eee;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #333;
+  z-index: 100;
+  line-height: 1.5;
+  margin-top: 5px;
+}

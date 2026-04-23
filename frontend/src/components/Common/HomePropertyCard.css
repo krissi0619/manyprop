@@ -1,0 +1,226 @@
+/* ===== HOME PROPERTY CARD – Market Ready ===== */
+.project-card.home-property-card-override {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1.5px solid #ebebeb;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  min-width: 420px;
+  max-width: 420px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+
+.project-card.home-property-card-override:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.1);
+  border-color: #dcdcdc;
+}
+
+/* Image */
+.project-card.home-property-card-override .project-image-container {
+  width: 100%;
+  height: 270px;
+  position: relative;
+  overflow: hidden;
+}
+
+.project-card.home-property-card-override .project-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.project-card.home-property-card-override:hover .project-image {
+  transform: scale(1.04);
+}
+
+/* Badges */
+.project-top-left-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: white;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #ea580c;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Wishlist */
+.project-card.home-property-card-override .project-wishlist {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.2s;
+}
+
+.project-card.home-property-card-override .project-wishlist:hover {
+  transform: scale(1.1);
+}
+
+/* Content */
+.project-card.home-property-card-override .project-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.project-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.project-bhk-type {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.bhk-text {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #111;
+}
+
+.type-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #444;
+}
+
+.project-location-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 600;
+}
+
+.project-location-icon {
+  font-size: 0.7rem;
+  color: #111;
+}
+
+.project-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.price-main {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #111;
+}
+
+.price-sub {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #888;
+}
+
+.price-area {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #888;
+}
+
+/* Meta row */
+.project-features-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+  margin-bottom: 4px;
+}
+
+.feature-pill {
+  background: #fdf5f0;
+  color: #ea580c;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(234, 88, 12, 0.2);
+}
+
+.feature-ribbon {
+  background: #ea580c;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 4px 12px 4px 10px;
+  clip-path: polygon(0% 0%, 90% 0%, 100% 50%, 90% 100%, 0% 100%);
+  margin-left: 'auto';
+  position: relative;
+}
+
+/* Footer buttons - Compare + View Details */
+.project-footer {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.project-compare-btn {
+  flex: 1;
+  background: white;
+  color: #111;
+  border: 1px solid #dcdcdc;
+  border-radius: 999px;
+  padding: 12px 0;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.project-compare-btn:hover {
+  background: #fdf5f0;
+  color: #ea580c;
+  border-color: #ea580c;
+}
+
+.project-view-btn {
+  flex: 1;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 0;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.project-view-btn:hover {
+  background: #111;
+}
