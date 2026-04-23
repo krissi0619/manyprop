@@ -1,5 +1,4 @@
 services:
-  # Backend Service
   - type: web
     name: manyprop-backend
     env: node
@@ -10,24 +9,18 @@ services:
     envVars:
       - key: PORT
         value: 10000
-      - key: NODE_VERSION
-        value: 18.16.0
+      - key: NODE_ENV
+        value: production
       - key: MONGODB_URI
-        fromValue: mongodb+srv://manyprop:manyprop123@cluster0.p1asphf.mongodb.net/manyprop?retryWrites=true&w=majority&appName=Cluster0
+        value: mongodb+srv://manyprop:manyprop123@cluster0.p1asphf.mongodb.net/manyprop?retryWrites=true&w=majority&appName=Cluster0
       - key: JWT_SECRET
-        fromValue: manyprop_secret_key_123_456
-      - key: EMAIL_HOST
-        value: smtp.gmail.com
-      - key: EMAIL_PORT
-        value: 587
+        value: manyprop_secret_key_123_456
 
-  # Frontend Static Service
-  -  type: web
+  - type: static
     name: manyprop-frontend
-    env: static
     rootDir: frontend
     buildCommand: npm install && CI=false npm run build
-    publishPath: build
+    staticPublishPath: build
     envVars:
       - key: REACT_APP_API_URL
         value: https://manyprop-backend.onrender.com
