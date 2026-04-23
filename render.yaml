@@ -22,7 +22,7 @@ services:
         value: 587
 
   # Frontend Static Service
-  - type: static
+  -  type: web
     name: manyprop-frontend
     env: static
     rootDir: frontend
