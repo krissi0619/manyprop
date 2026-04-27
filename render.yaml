@@ -31,7 +31,10 @@ services:
     staticPublishPath: build
     envVars:
       - key: REACT_APP_API_URL
-        value: https://manyprop-backend.onrender.com
+        fromService:
+          type: web
+          name: manyprop-backend
+          envVarKey: RENDER_EXTERNAL_URL
     routes:
       - type: rewrite
         source: /*
