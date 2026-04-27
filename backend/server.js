@@ -11,6 +11,9 @@ require('dotenv').config();
 
 const app = express();
 
+// Trust proxy for Render deployment to get correct protocol
+app.set('trust proxy', 1);
+
 // Set up storage for uploaded files
 const uploadDir = path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadDir)) {
