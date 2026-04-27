@@ -1156,3 +1156,27 @@
     color: #64748b;
     font-size: 0.95rem;
 }
+
+/* Fix for Similar Properties Grid Overlap */
+.pd-similar-properties-section {
+    margin-top: 50px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+    clear: both;
+}
+
+.similar-properties-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+    margin-bottom: 40px;
+}
+
+.similar-properties-grid .project-card,
+.similar-properties-grid .home-property-card-override {
+    width: 100% !important;
+    min-width: unset !important;
+    max-width: 100% !important;
+    flex-shrink: 1 !important;
+}

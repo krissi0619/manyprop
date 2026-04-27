@@ -82,6 +82,7 @@ const PropertySchema = new mongoose.Schema({
   },
   amenities: [String],
   images: [String],
+  video: String,
   featured: {
     type: Boolean,
     default: false

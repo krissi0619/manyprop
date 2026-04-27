@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fa';
 import axios from 'axios';
 import { API_PROPERTIES, API_NEWS, API_CONTACTS, API_OFFERS } from '../api/config';
+import HomePropertyCard from '../components/Common/HomePropertyCard';
 import './PropertyDetails.css';
 
 // Fallback mock data so the page always renders
@@ -75,20 +76,59 @@ const PropertyDetails = () => {
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [offerForm, setOfferForm] = useState({ offerPrice: '', paymentType: 'loan', closingDate: '' });
   const [offerStatus, setOfferStatus] = useState({ loading: false, success: false });
+  const [similarProperties, setSimilarProperties] = useState([]);
+  const [similarLoading, setSimilarLoading] = useState(false);
 
   useEffect(() => {
-    const fetchProperty = async () => {
+    window.scrollTo(0, 0);
+    const fetchPropertyAndSimilar = async () => {
       setLoading(true);
+      let currentProperty = null;
       try {
         const res = await axios.get(`${API_PROPERTIES}/${id}`);
-        setProperty(res.data);
+        currentProperty = res.data;
+        setProperty(currentProperty);
       } catch {
-        setProperty(MOCK_PROPERTY);
+        currentProperty = MOCK_PROPERTY;
+        setProperty(currentProperty);
       } finally {
         setLoading(false);
       }
+
+      if (currentProperty && currentProperty.address?.city) {
+        setSimilarLoading(true);
+        try {
+          const queryParams = new URLSearchParams({ city: currentProperty.address.city, limit: 5 });
+          if (currentProperty.propertyType) queryParams.append('propertyType', currentProperty.propertyType);
+          if (currentProperty.priceType) queryParams.append('priceType', currentProperty.priceType);
+          
+          const simRes = await axios.get(`${API_PROPERTIES}?${queryParams.toString()}`);
+          const simProps = simRes.data.properties || [];
+          // Filter out the current property
+          let filteredSimProps = simProps.filter(p => (p._id || p.id) !== id).slice(0, 4);
+          
+          if (filteredSimProps.length === 0) {
+            // Fallback mock properties if no similar ones found from DB
+            filteredSimProps = [
+              { ...MOCK_PROPERTY, _id: 'sim1', id: 'sim1', title: `Similar Property in ${currentProperty.address.city}` },
+              { ...MOCK_PROPERTY, _id: 'sim2', id: 'sim2', title: `Beautiful Flat in ${currentProperty.address.city}` },
+              { ...MOCK_PROPERTY, _id: 'sim3', id: 'sim3', title: `Luxury Villa in ${currentProperty.address.city}` }
+            ];
+          }
+          setSimilarProperties(filteredSimProps);
+        } catch (err) {
+          console.error("Failed to fetch similar properties", err);
+          // Fallback on error
+          setSimilarProperties([
+            { ...MOCK_PROPERTY, _id: 'sim1', id: 'sim1', title: `Similar Property in ${currentProperty.address?.city || 'Unknown'}` },
+            { ...MOCK_PROPERTY, _id: 'sim2', id: 'sim2', title: `Beautiful Flat in ${currentProperty.address?.city || 'Unknown'}` }
+          ]);
+        } finally {
+          setSimilarLoading(false);
+        }
+      }
     };
-    fetchProperty();
+    fetchPropertyAndSimilar();
   }, [id]);
 
 
@@ -234,6 +274,12 @@ const PropertyDetails = () => {
                 ))}
               </div>
             </div>
+            {p.video && (
+                <div style={{ marginTop: '20px' }}>
+                    <h3 style={{ marginBottom: '10px' }}>Property Video</h3>
+                    <video src={p.video} controls style={{ width: '100%', borderRadius: '10px' }} />
+                </div>
+            )}
           </div>
 
           {/* Title Row */}
@@ -354,6 +400,17 @@ const PropertyDetails = () => {
               </div>
             )}
           </div>
+          {/* Similar Properties Section */}
+          {similarProperties.length > 0 && (
+            <div className="pd-similar-properties-section">
+              <h2 className="section-title" style={{ marginTop: '40px', marginBottom: '20px' }}>Similar Properties in {p.address?.city}</h2>
+              <div className="similar-properties-grid">
+                {similarProperties.map(prop => (
+                  <HomePropertyCard key={prop._id || prop.id} property={prop} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ===== RIGHT SIDEBAR ===== */}
@@ -508,7 +565,6 @@ const PropertyDetails = () => {
               <button className="pd-view-details-btn" onClick={() => navigate('/properties')}>View Details</button>
             </div>
           </div>
-
 
         </div>
       </div>

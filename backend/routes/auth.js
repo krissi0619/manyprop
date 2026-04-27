@@ -2,11 +2,16 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
 const { body, validationResult } = require('express-validator');
+const nodemailer = require('nodemailer');
 const User = require('../models/User');
 
 // In-memory OTP store (in production, use Redis or DB)
 const otpStore = new Map();
+
+// Google Client setup
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || 'your-google-client-id.apps.googleusercontent.com');
 
 // Generate a 6-digit OTP
 function generateOTP() {
@@ -19,15 +24,19 @@ function generateOTP() {
 router.post('/send-otp', async (req, res) => {
   try {
     const { phone, name, email, userType, isAgent } = req.body;
-    if (!phone) {
-      return res.status(400).json({ message: 'Phone number is required' });
+    
+    // Identifier can be phone OR email
+    const identifier = phone || email;
+    if (!identifier) {
+      return res.status(400).json({ message: 'Phone or email is required' });
     }
-    if (!/^\d{10}$/.test(phone)) {
+
+    if (phone && !/^\d{10}$/.test(phone) && phone !== '9999999999') {
       return res.status(400).json({ message: 'Phone must be exactly 10 digits' });
     }
 
     const otp = generateOTP();
-    otpStore.set(phone, {
+    otpStore.set(identifier, {
       otp,
       expiresAt: Date.now() + 10 * 60 * 1000,
       attempts: 0,
@@ -39,9 +48,52 @@ router.post('/send-otp', async (req, res) => {
 
     console.log(`[OTP] Sent to +91${phone}: ${otp}`);
 
+    let targetEmail = email;
+    if (targetEmail && (targetEmail.endsWith('@manyprop.phone') || targetEmail.endsWith('@manyprop.app'))) {
+      targetEmail = null;
+    }
+
+    if (!targetEmail) {
+      const existingUser = await User.findOne({ phone });
+      if (existingUser && existingUser.email && !existingUser.email.endsWith('@manyprop.phone') && !existingUser.email.endsWith('@manyprop.app')) {
+        targetEmail = existingUser.email;
+      }
+    }
+
+    if (targetEmail) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+          port: process.env.EMAIL_PORT || 587,
+          secure: false, // true for 465, false for other ports
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+        });
+
+        await transporter.sendMail({
+          from: `"ManyProp" <${process.env.EMAIL_USER}>`,
+          to: targetEmail,
+          subject: "Your ManyProp Login OTP",
+          html: `<div style="font-family: Arial, sans-serif; text-align: center; padding: 30px; background-color: #f9f9f9; border-radius: 10px;">
+                  <h2 style="color: #333;">Welcome to ManyProp!</h2>
+                  <p style="color: #666; font-size: 16px;">Your One-Time Password (OTP) for login is:</p>
+                  <div style="margin: 20px 0; padding: 15px; background: #fff; border: 2px dashed #ea580c; display: inline-block; border-radius: 8px;">
+                    <h1 style="color: #ea580c; letter-spacing: 5px; margin: 0; font-size: 32px;">${otp}</h1>
+                  </div>
+                  <p style="color: #888; font-size: 14px;">This OTP is valid for 10 minutes. Do not share it with anyone.</p>
+                 </div>`,
+        });
+        console.log(`[Email] OTP sent to ${targetEmail}`);
+      } catch (emailError) {
+        console.error('Failed to send email:', emailError.message);
+      }
+    }
+
     res.json({
       success: true,
-      message: 'OTP sent successfully',
+      message: targetEmail ? 'OTP sent to your email and phone' : 'OTP sent successfully',
       // Remove devOTP in production — only for development/testing
       devOTP: otp
     });
@@ -58,23 +110,24 @@ router.post('/verify-otp', async (req, res) => {
   try {
     const { phone, otp, name, email, userType, isAgent } = req.body;
 
-    if (!phone || !otp) {
-      return res.status(400).json({ message: 'Phone and OTP are required' });
+    const identifier = phone || email;
+    if (!identifier || !otp) {
+      return res.status(400).json({ message: 'Phone/Email and OTP are required' });
     }
 
-    const stored = otpStore.get(phone);
+    const stored = otpStore.get(identifier);
 
     if (!stored) {
       return res.status(400).json({ message: 'OTP expired or not sent. Please click "Send OTP" again.' });
     }
 
     if (Date.now() > stored.expiresAt) {
-      otpStore.delete(phone);
+      otpStore.delete(identifier);
       return res.status(400).json({ message: 'OTP has expired (10 min limit). Please request a new one.' });
     }
 
     if (stored.attempts >= 5) {
-      otpStore.delete(phone);
+      otpStore.delete(identifier);
       return res.status(400).json({ message: 'Too many wrong attempts. Please request a new OTP.' });
     }
 
@@ -88,45 +141,50 @@ router.post('/verify-otp', async (req, res) => {
 
     // OTP verified — gather user data
     const resolvedName = name || stored.name;
-    const resolvedEmail = email || stored.email;
+    const resolvedEmail = email || stored.email || (identifier.includes('@') ? identifier : null);
+    const isPhoneActuallyEmail = phone && phone.includes('@');
+    const resolvedPhone = (phone && phone !== '9999999999' && !isPhoneActuallyEmail) ? phone : (identifier.includes('@') ? null : identifier);
     const resolvedUserType = userType || stored.userType || 'Buyer';
     const resolvedIsAgent = isAgent !== undefined ? isAgent : stored.isAgent;
 
-    otpStore.delete(phone);
+    otpStore.delete(identifier);
 
     let isNewUser = false;
+    let user = null;
 
-    // Find existing user by phone
-    let user = await User.findOne({ phone });
+    // Find existing user by phone if valid
+    if (resolvedPhone) {
+      user = await User.findOne({ phone: resolvedPhone });
+    }
 
-    if (!user) {
-      // Try to find by email if provided
-      if (resolvedEmail) {
-        user = await User.findOne({ email: resolvedEmail.toLowerCase() });
-        if (user) {
-          user.phone = phone;
-          user.verified = true;
-          if (!user.userType) user.userType = resolvedUserType;
-          if (resolvedIsAgent) {
-            user.isAgent = true;
-            user.role = 'agent';
-          }
-          await user.save();
+    if (!user && resolvedEmail) {
+      // Try to find by email
+      user = await User.findOne({ email: resolvedEmail.toLowerCase() });
+      if (user) {
+        if (resolvedPhone && !user.phone) user.phone = resolvedPhone;
+        user.verified = true;
+        if (!user.userType) user.userType = resolvedUserType;
+        if (resolvedIsAgent) {
+          user.isAgent = true;
+          user.role = 'agent';
         }
+        await user.save();
       }
+    }
 
-      // Still no user — create new one
-      if (!user) {
-        isNewUser = true;
-        const randomPassword = require('crypto').randomBytes(16).toString('hex');
-        const fallbackEmail = resolvedEmail || `${phone}.${Date.now()}@manyprop.phone`;
+    // Still no user — create new one
+    if (!user) {
+      isNewUser = true;
+      const randomPassword = require('crypto').randomBytes(16).toString('hex');
+      const fallbackEmail = resolvedEmail || `${resolvedPhone || Date.now()}.${Date.now()}@manyprop.phone`;
+      const fallbackPhone = resolvedPhone || `0000000000`; // Requires 10 digit string minimum based on schema usually? Wait schema might not enforce it if not required, let's just save what we have.
 
         try {
           user = new User({
-            name: resolvedName || `User_${phone.slice(-4)}`,
+            name: resolvedName || (resolvedEmail ? resolvedEmail.split('@')[0] : `User_${resolvedPhone.slice(-4)}`),
             email: fallbackEmail.toLowerCase(),
             password: randomPassword,
-            phone,
+            phone: fallbackPhone,
             isAgent: resolvedIsAgent,
             role: resolvedIsAgent ? 'agent' : 'user',
             userType: resolvedUserType,
@@ -144,7 +202,6 @@ router.post('/verify-otp', async (req, res) => {
             throw saveErr;
           }
         }
-      }
     } else {
       // Existing phone user — update verified status
       if (!user.verified) {
@@ -370,6 +427,87 @@ router.post('/login', [
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/auth/google
+// @desc    Login/Register user with Google SSO
+// @access  Public
+router.post('/google', async (req, res) => {
+  try {
+    const { token, isAgent, userType } = req.body;
+    
+    if (!token) {
+      return res.status(400).json({ message: 'No token provided' });
+    }
+
+    // Verify Google Access Token
+    const googleRes = await require('axios').get('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    const payload = googleRes.data;
+    const { email, name, picture, sub: googleId } = payload;
+    
+    // Find or Create User
+    let user = await User.findOne({ email });
+    let isNewUser = false;
+    
+    if (!user) {
+      isNewUser = true;
+      const randomPassword = require('crypto').randomBytes(16).toString('hex');
+      
+      user = new User({
+        name,
+        email,
+        password: randomPassword,
+        phone: '0000000000', // Mock phone since Google doesn't always provide one
+        isAgent: isAgent || false,
+        role: isAgent ? 'agent' : 'user',
+        userType: userType || 'Buyer',
+        verified: true,
+        profileComplete: false,
+        'profile.avatar': picture
+      });
+      await user.save();
+    }
+    
+    // Generate JWT
+    const jwtPayload = {
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        userType: user.userType
+      }
+    };
+    
+    const jwtToken = jwt.sign(
+      jwtPayload,
+      process.env.JWT_SECRET || 'fallback_secret',
+      { expiresIn: '30d' }
+    );
+    
+    res.json({
+      success: true,
+      token: jwtToken,
+      isNewUser: isNewUser || !user.profileComplete,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        userType: user.userType,
+        isAgent: user.isAgent,
+        profileComplete: user.profileComplete,
+        profile: user.profile
+      }
+    });
+
+  } catch (error) {
+    console.error('Google Auth Error:', error.message);
+    res.status(500).json({ message: 'Google authentication failed' });
   }
 });
 

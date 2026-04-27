@@ -1,27 +1,38 @@
 services:
-- type: web
-  name: manyprop-backend
+  - type: web
+    name: manyprop-backend
     env: node
-      plan: free
-        rootDir: backend
-          buildCommand: npm install
-            startCommand: node server.js
-              envVars:
-                - key: PORT
-                    value: 10000
-                      - key: NODE_ENV
-                          value: production
-                            - key: MONGODB_URI
-                                value: mongodb+srv://manyprop:manyprop123@cluster0.p1asphf.mongodb.net/manyprop?retryWrites=true&w=majority&appName=Cluster0
-                                  - key: JWT_SECRET
-                                      value: manyprop_secret_key_123_456
-                                      - type: web
-                                        name: manyprop-frontend
-                                          runtime: static
-                                            rootDir: frontend
-                                              buildCommand: npm install && CI=false npm run build
-                                                staticPublishPath: build
-                                                  envVars:
-                                                    - key: REACT_APP_API_URL
-                                                        value: https://manyprop-backend.onrender.com
-                                                        
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        value: mongodb+srv://manyprop:manyprop123@cluster0.p1asphf.mongodb.net/manyprop?retryWrites=true&w=majority&appName=Cluster0
+      - key: JWT_SECRET
+        value: manyprop_secret_key_123_456
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: 587
+      - key: EMAIL_USER
+        value: rohity2810@gmail.com
+      - key: EMAIL_PASS
+        value: qjwhcwgdvscwczxg
+
+  - type: static
+    name: manyprop-frontend
+    rootDir: frontend
+    buildCommand: npm install && CI=false npm run build
+    staticPublishPath: build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://manyprop-backend.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

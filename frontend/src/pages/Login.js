@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useGoogleLogin } from '@react-oauth/google';
 import './Login.css';
 import { API_AUTH } from '../api/config';
 
@@ -416,12 +417,20 @@ const Login = () => {
   // Step 1 – Send OTP from login screen
   const handleLoginSendOTP = async (e) => {
     e.preventDefault();
-    if (!loginPhone || loginPhone.length !== 10) {
-      setError('Please enter a valid 10-digit phone number');
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginPhone);
+    const isPhone = /^\d{10}$/.test(loginPhone);
+
+    if (!isEmail && !isPhone) {
+      setError('Please enter a valid 10-digit phone number or email address');
       return;
     }
+    
     setFlow('login');
-    await apiSendOTP(loginPhone);
+    if (isEmail) {
+      await apiSendOTP('', { email: loginPhone });
+    } else {
+      await apiSendOTP(loginPhone);
+    }
   };
 
   // Step 2 – Verify OTP
@@ -457,7 +466,41 @@ const Login = () => {
     await apiSendOTP(phone);
   };
 
-  // Step 3 – Google account creation → send OTP
+  // Step 3 – Google account creation → real Google SSO Flow
+  const googleLoginHandler = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoading(true);
+      clearError();
+      try {
+        const res = await axios.post(`${API_AUTH}/google`, {
+          token: tokenResponse.access_token,
+          isAgent: regData.isAgent,
+          userType: regData.isAgent ? 'Agent' : 'Buyer / Tenant'
+        });
+        
+        if (res.data.success) {
+          const { token, user, isNewUser } = res.data;
+          if (isNewUser || !user.profileComplete) {
+            setAuthToken(token);
+            setAuthUser(user);
+            setProfileData(prev => ({ 
+              ...prev, 
+              avatarUrl: user.profile?.avatar || '',
+              userType: user.userType || 'Buyer / Tenant'
+            }));
+            setStep(STEPS.PROFILE);
+          } else {
+            goHome(token, user);
+          }
+        }
+      } catch (err) {
+        setError(err?.response?.data?.message || 'Google login failed');
+      } finally {
+        setLoading(false);
+      }
+    }
+  });
+
   const handleGoogleAccountContinue = async (e) => {
     e.preventDefault();
     if (!regData.phone || regData.phone.length !== 10) {
@@ -553,19 +596,18 @@ const Login = () => {
           <form onSubmit={handleLoginSendOTP}>
             <div className="field-group">
               <label className="field-label">Enter Phone / Email</label>
-              <div className="phone-row">
-                <span className="phone-prefix">+91</span>
+              <div className="phone-row" style={{ paddingLeft: loginPhone && !/^\d+$/.test(loginPhone) ? '16px' : undefined }}>
+                {(!loginPhone || /^\d+$/.test(loginPhone)) && <span className="phone-prefix">+91</span>}
                 <input
                   id="login-phone"
                   className="phone-input"
-                  type="tel"
-                  placeholder="9876543210"
+                  type="text"
+                  placeholder="9876543210 or email@example.com"
                   value={loginPhone}
                   onChange={e => {
                     clearError();
-                    setLoginPhone(e.target.value.replace(/\D/g, '').slice(0, 10));
+                    setLoginPhone(e.target.value);
                   }}
-                  maxLength={10}
                   autoFocus
                 />
               </div>
@@ -580,7 +622,7 @@ const Login = () => {
 
           <div className="or-divider">or</div>
 
-          <button className="btn-google" type="button" onClick={handleGoogleClick}>
+          <button className="btn-google" type="button" onClick={() => googleLoginHandler()}>
             <GoogleIcon />
             Continue with google
           </button>
@@ -619,7 +661,9 @@ const Login = () => {
           <h2 className="otp-title">Enter OTP</h2>
           <p className="otp-subtitle">
             We sent a 6-digit OTP to{' '}
-            <strong style={{ color: '#111' }}>+91 {displayPhone}</strong>
+            <strong style={{ color: '#111' }}>
+              {/^\d+$/.test(displayPhone) ? `+91 ${displayPhone}` : displayPhone}
+            </strong>
           </p>
 
           {devOTP && (

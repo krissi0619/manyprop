@@ -67,6 +67,8 @@ const Profile = () => {
     const [compareProps, setCompareProps] = useState([]);
     const [offers, setOffers] = useState([]);
     const [offerLoading, setOfferLoading] = useState(false);
+    const [myProperties, setMyProperties] = useState([]);
+    const [myPropsLoading, setMyPropsLoading] = useState(false);
 
     const [userFullData, setUserFullData] = useState(null);
     const [kycVerifyStatus, setKycVerifyStatus] = useState({});
@@ -100,7 +102,11 @@ const Profile = () => {
             setSavedProps(JSON.parse(localStorage.getItem('mp_saved') || '[]'));
             // Compare uses 'manyprop_compare' key (same as Compare page & PropertyDetails)
             setCompareProps(JSON.parse(localStorage.getItem('manyprop_compare') || '[]'));
-            if (storedUser) fetchOffers(JSON.parse(storedUser));
+            if (storedUser) {
+                const parsedUser = JSON.parse(storedUser);
+                fetchOffers(parsedUser);
+                fetchMyProperties(parsedUser);
+            }
         } catch (e) { }
     }, [navigate, activeTab]);
 
@@ -213,6 +219,33 @@ const Profile = () => {
             fetchOffers(user);
         } catch (err) {
             alert('Failed to update offer status');
+        }
+    };
+
+    const fetchMyProperties = async (currentUser) => {
+        setMyPropsLoading(true);
+        try {
+            const res = await axios.get(`${API}/api/properties?owner=${currentUser.id || currentUser._id}`);
+            setMyProperties(res.data.properties || []);
+        } catch (err) {
+            console.error('Failed to fetch my properties:', err);
+        } finally {
+            setMyPropsLoading(false);
+        }
+    };
+
+    const handleDeleteProperty = async (propertyId) => {
+        if (!window.confirm("Are you sure you want to delete this property?")) return;
+        const token = localStorage.getItem('mp_token');
+        try {
+            await axios.delete(`${API}/api/properties/${propertyId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setMyProperties(prev => prev.filter(p => p._id !== propertyId && p.id !== propertyId));
+            alert("Property deleted successfully");
+        } catch (err) {
+            console.error("Failed to delete property:", err);
+            alert("Failed to delete property");
         }
     };
 
@@ -683,10 +716,26 @@ const Profile = () => {
                                 <button className="btn-explore" onClick={() => navigate('/post-property')}>+ Add Property</button>
                             </div>
                             <p>Properties you have listed for sale or rent.</p>
-                            <div className="empty-state">
-                                <FaBuilding className="empty-icon" />
-                                <p>You haven't listed any properties yet.</p>
-                            </div>
+                            
+                            {myPropsLoading ? (
+                                <p>Loading your properties...</p>
+                            ) : myProperties.length > 0 ? (
+                                <div className="prof-prop-list">
+                                    {myProperties.map((p, idx) => (
+                                        <ProfilePropertyRow
+                                            key={p._id || p.id || idx}
+                                            property={p}
+                                            onRemove={() => handleDeleteProperty(p._id || p.id)}
+                                            onView={() => navigate(`/properties/${p._id || p.id}`)}
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="empty-state">
+                                    <FaBuilding className="empty-icon" />
+                                    <p>You haven't listed any properties yet.</p>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

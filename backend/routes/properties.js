@@ -25,11 +25,14 @@ router.get('/', async (req, res) => {
       search,
       featured,
       trending,
-      recommended
+      recommended,
+      owner
     } = req.query;
 
     // Build filter object
     const filter = {};
+
+    if (owner) filter.owner = owner;
 
     if (propertyType) filter.propertyType = propertyType;
     if (priceType) filter.priceType = priceType;

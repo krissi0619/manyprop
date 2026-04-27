@@ -3,7 +3,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import {
     FaArrowLeft, FaHeart, FaMapMarkerAlt, FaHome, FaRegBuilding,
-    FaRegFileAlt, FaPhoneAlt, FaCheckCircle, FaPlayCircle, FaArrowRight, FaPlus, FaTrash, FaCloudUploadAlt
+    FaRegFileAlt, FaPhoneAlt, FaCheckCircle, FaPlayCircle, FaArrowRight, 
+    FaPlus, FaTrash, FaCloudUploadAlt, FaWifi, FaDumbbell, FaBatteryFull, 
+    FaArrowUp, FaCar, FaShieldAlt, FaUsers, FaSwimmer, FaVideo, FaGamepad
 } from 'react-icons/fa';
 import { FiUser } from 'react-icons/fi';
 import Select, { components } from 'react-select';
@@ -165,9 +167,39 @@ const PostProperty = () => {
 
     const LocationMarker = () => {
         useMapEvents({
-            click(e) {
-                update('lat', e.latlng.lat);
-                update('lng', e.latlng.lng);
+            async click(e) {
+                const { lat, lng } = e.latlng;
+                update('lat', lat);
+                update('lng', lng);
+                
+                try {
+                    const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                    if (res.data && res.data.address) {
+                        const { address } = res.data;
+                        const newCity = address.city || address.town || address.village || address.county || '';
+                        const newState = address.state || '';
+                        const newPincode = address.postcode || '';
+                        const newLocality = address.suburb || address.neighbourhood || address.road || '';
+                        
+                        setForm(prev => ({
+                            ...prev,
+                            city: newCity,
+                            state: newState,
+                            pincode: newPincode,
+                            locality: newLocality,
+                            city2: newCity,
+                            locality2: newLocality,
+                            nearbyPlaces: [
+                                { name: `${newLocality || newCity} Public School`, dist: '1-2 km' },
+                                { name: `${newLocality || newCity} General Hospital`, dist: '2-3 km' },
+                                { name: `${newLocality || newCity} Shopping Mall`, dist: '3-4 km' },
+                                { name: `${newLocality || newCity} Metro Station`, dist: '1-2 km' }
+                            ]
+                        }));
+                    }
+                } catch (error) {
+                    console.error('Reverse geocoding failed:', error);
+                }
             },
         });
 
@@ -190,26 +222,76 @@ const PostProperty = () => {
         setSubmitting(true);
         setError('');
         try {
+            // Map propertyType to backend enum
+            const typeMap = {
+                'Flat / Apartment': 'apartment',
+                'Independent house': 'independent_house',
+                'Villa': 'villa',
+                'Farm house': 'farm',
+                'Luxury Bungalow': 'luxury_bungalow',
+                'Paying Guest (PG)': 'pg',
+                'Plot / Land': 'plot',
+                'Commercial': 'commercial',
+                'Project': 'project'
+            };
+            const mappedType = typeMap[form.propertyType] || form.propertyType.toLowerCase().replace(/ /g, '_');
+
+            const furnishMap = {
+                'Furnished': 'fully_furnished',
+                'Semi furnished': 'semi_furnished',
+                'Not furnished': 'unfurnished'
+            };
+
+            const token = localStorage.getItem('mp_token');
+            const storedUser = JSON.parse(localStorage.getItem('mp_user') || '{}');
+            const ownerId = storedUser.id || storedUser._id;
+
+            // Upload helper
+            const uploadFile = async (file) => {
+                const formData = new FormData();
+                formData.append('file', file);
+                const res = await axios.post(`${API_PROPERTIES.replace('/api/properties', '')}/api/upload`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                return `${API_PROPERTIES.replace('/api/properties', '')}${res.data.url}`;
+            };
+
+            // Upload images
+            const uploadedImages = [];
+            for (const img of form.images) {
+                if (img.file) {
+                    const url = await uploadFile(img.file);
+                    uploadedImages.push(url);
+                }
+            }
+
+            // Upload video
+            let videoUrl = null;
+            if (form.video && form.video.file) {
+                videoUrl = await uploadFile(form.video.file);
+            }
+
             const payload = {
+                owner: ownerId,
                 title: form.societyName || `${form.bedrooms} BHK ${form.propertyType}`,
                 description: form.aboutProperty || `Beautiful ${form.bedrooms} BHK ${form.propertyType} in ${form.city}.`,
                 price: parseFloat(form.expectedPrice.replace(/,/g, '')) || 0,
                 priceType: form.intent.includes('Rent') ? 'rent' : 'sale',
-                propertyType: form.propertyType.toLowerCase().replace(/ /g, '_'),
+                propertyType: mappedType,
                 address: {
                     street: form.societyName,
                     city: form.city,
                     locality: form.locality,
                     state: form.state,
                     pincode: form.pincode,
-                    coordinates: [form.lng, form.lat]
+                    coordinates: { lat: form.lat, lng: form.lng }
                 },
                 details: {
                     bedrooms: parseInt(form.bedrooms) || 0,
                     bathrooms: parseInt(form.bathrooms) || 0,
                     carpetArea: parseInt(form.carpetArea) || 0,
                     builtUpArea: parseInt(form.builtUpArea) || 0,
-                    furnished: form.furnished,
+                    furnished: furnishMap[form.furnished] || 'unfurnished',
                     parking: form.parking,
                     floor: form.floorNumber,
                     propertyAge: form.propertyAge,
@@ -218,13 +300,23 @@ const PostProperty = () => {
                     reraNo: form.reraNo,
                     nearbyPlaces: form.nearbyPlaces
                 },
-                images: form.images.length > 0 ? form.images.map(img => img.url) : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80'],
+                images: uploadedImages.length > 0 ? uploadedImages : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80'],
+                video: videoUrl
             };
-            await axios.post(API_PROPERTIES, payload);
+            
+            const config = {
+                headers: {}
+            };
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+
+            await axios.post(API_PROPERTIES, payload, config);
             setSubmitted(true);
         } catch (err) {
             console.error(err);
-            setSubmitted(true); // fallback for demo
+            setError(err.response?.data?.message || 'Failed to post property. Please check your details.');
+            // Do not set submitted to true on error
         } finally {
             setSubmitting(false);
         }
@@ -281,6 +373,12 @@ const PostProperty = () => {
                         <div className="pp-step-text">Step {step} of 6</div>
                         <span className="pct">{progress}% Complete</span>
                     </div>
+
+                    {error && (
+                        <div style={{ padding: '10px', background: '#fee2e2', color: '#991b1b', borderRadius: '8px', marginTop: '10px', fontWeight: '500' }}>
+                            ⚠️ {error}
+                        </div>
+                    )}
 
                     <div className="pp-stepper">
                         <div className="stepper-line-bg"></div>
@@ -405,16 +503,26 @@ const PostProperty = () => {
 
                             <div className="section-divider"></div>
 
-                            <h2 className="step-heading-main">Popular Aminities</h2>
+                            <h2 className="step-heading-main">Popular Amenities</h2>
                             <div className="amenities-grid-new">
                                 {[
-                                    'WIFI', 'Gym', 'Power backup', 'Lift', 'Gym', 'Power backup',
-                                    'Covered Parking', 'Security', 'Club house', 'Swimming pool',
-                                    'CCTV Camera', 'Play area'
-                                ].map((a, idx) => (
-                                    <div key={idx} className={`amenity-card-new ${form.amenities.includes(a) ? 'selected' : ''}`} onClick={() => toggle('amenities', a)}>
+                                    { label: 'WIFI', icon: <FaWifi /> }, 
+                                    { label: 'Gym', icon: <FaDumbbell /> }, 
+                                    { label: 'Power backup', icon: <FaBatteryFull /> }, 
+                                    { label: 'Lift', icon: <FaArrowUp /> },
+                                    { label: 'Covered Parking', icon: <FaCar /> }, 
+                                    { label: 'Security', icon: <FaShieldAlt /> }, 
+                                    { label: 'Club house', icon: <FaUsers /> }, 
+                                    { label: 'Swimming pool', icon: <FaSwimmer /> },
+                                    { label: 'CCTV Camera', icon: <FaVideo /> }, 
+                                    { label: 'Play area', icon: <FaGamepad /> }
+                                ].map((item, idx) => (
+                                    <div key={idx} className={`amenity-card-new ${form.amenities.includes(item.label) ? 'selected' : ''}`} onClick={() => toggle('amenities', item.label)}>
                                         <div className="amenity-check-box"></div>
-                                        <div className="amenity-label-new">{a}</div>
+                                        <div className="amenity-icon-box" style={{ marginRight: '8px', color: form.amenities.includes(item.label) ? '#ea580c' : '#888', display: 'flex', alignItems: 'center' }}>
+                                            {item.icon}
+                                        </div>
+                                        <div className="amenity-label-new">{item.label}</div>
                                     </div>
                                 ))}
                             </div>

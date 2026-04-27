@@ -8,7 +8,7 @@ import {
 } from 'react-icons/fa';
 import PropertyCard from '../components/Common/PropertyCard';
 import FilterSidebar from '../components/Properties/FilterSidebar';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, Circle, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { API_PROPERTIES } from '../api/config';
@@ -172,6 +172,80 @@ function AreaClickHandler({ onAreaClick }) {
   useMapEvents({ click(e) { onAreaClick(e.latlng); } });
   return null;
 }
+
+/* ─── Map Search Box ─── */
+const MapSearchBox = () => {
+  const map = useMap();
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    setLoading(true);
+    try {
+      const res = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+      if (res.data && res.data.length > 0) {
+        const { lat, lon } = res.data[0];
+        map.flyTo([lat, lon], 13);
+      } else {
+        alert("Location not found");
+      }
+    } catch (err) {
+      console.error("Geocoding error:", err);
+      alert("Failed to search location");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="map-search-box" style={{
+      position: 'absolute',
+      top: '12px',
+      left: '52px',
+      zIndex: 1000,
+      background: '#fff',
+      padding: '6px',
+      borderRadius: '8px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      display: 'flex',
+      alignItems: 'center'
+    }}>
+      <form onSubmit={handleSearch} style={{ display: 'flex', margin: 0 }}>
+        <input 
+          type="text" 
+          placeholder="Search location in map..." 
+          value={query} 
+          onChange={(e) => setQuery(e.target.value)} 
+          style={{ 
+            border: '1px solid #e0e0e0', 
+            borderRadius: '6px', 
+            padding: '8px 12px', 
+            outline: 'none',
+            fontSize: '14px',
+            fontFamily: 'Inter, sans-serif',
+            width: '220px'
+          }}
+        />
+        <button type="submit" style={{ 
+          background: '#ea580c', 
+          color: 'white', 
+          border: 'none', 
+          borderRadius: '6px', 
+          padding: '8px 16px', 
+          cursor: 'pointer', 
+          marginLeft: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          {loading ? '...' : <FaSearch />}
+        </button>
+      </form>
+    </div>
+  );
+};
 
 /* ─── Advanced Search Panel ─── */
 const AdvancedSearchPanel = ({ initialCity, initialType, onSearch }) => {
@@ -533,6 +607,16 @@ const Properties = () => {
     return `₹${p.toLocaleString()}/mo`;
   };
 
+  // Filter properties by distance if areaSearchCenter is active
+  const displayedProperties = React.useMemo(() => {
+    if (!areaSearchCenter) return properties;
+    return properties.filter((p, idx) => {
+      const coords = getCoordinates(p, idx);
+      const distance = L.latLng(coords[0], coords[1]).distanceTo(areaSearchCenter);
+      return distance <= 2000; // 2km radius
+    });
+  }, [properties, areaSearchCenter]);
+
   return (
     <div className="properties-page">
       {/* NEW TOP SEARCH PILL BAR */}
@@ -714,7 +798,7 @@ const Properties = () => {
                     <div className="map-info-bar">
                       <span>
                         <FaMapMarkerAlt style={{ color: '#0a0a0a', marginRight: 4 }} />
-                        <strong>{properties.length}</strong> properties on map
+                        <strong>{displayedProperties.length}</strong> properties on map
                       </span>
                       {areaSearchCenter ? (
                         <button className="area-clear-btn" onClick={() => setAreaSearchCenter(null)}>
@@ -732,6 +816,7 @@ const Properties = () => {
                             attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>'
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                           />
+                          <MapSearchBox />
                           <AreaClickHandler onAreaClick={setAreaSearchCenter} />
                           {areaSearchCenter && (
                             <Circle
@@ -740,10 +825,10 @@ const Properties = () => {
                               pathOptions={{ color: '#0a0a0a', fillColor: '#0a0a0a', fillOpacity: 0.05, weight: 2, dashArray: '6,4' }}
                             />
                           )}
-                          {properties.map((p, idx) => (
+                          {displayedProperties.map((p, idx) => (
                             <Marker
                               key={p._id}
-                              position={getCoordinates(p, idx)}
+                              position={getCoordinates(p, properties.indexOf(p))}
                               icon={createPriceIcon(p.price, hoveredId === p._id || selectedProp?._id === p._id)}
                               eventHandlers={{
                                 click: () => setSelectedProp(p),
@@ -777,12 +862,12 @@ const Properties = () => {
                       {/* Map sidebar */}
                       <div className="map-prop-list">
                         <div className="map-prop-list-header">
-                          Properties ({properties.length})
+                          Properties ({displayedProperties.length})
                           {areaSearchCenter && <span className="map-area-tag">Near selected</span>}
                         </div>
-                        {properties.length === 0 ? (
+                        {displayedProperties.length === 0 ? (
                           <div className="map-no-results">No properties in this area</div>
-                        ) : properties.map(p => (
+                        ) : displayedProperties.map(p => (
                           <div
                             key={p._id}
                             className={`map-prop-card ${hoveredId === p._id ? 'hovered' : ''} ${selectedProp?._id === p._id ? 'selected' : ''}`}
