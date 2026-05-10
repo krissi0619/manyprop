@@ -85,4 +85,38 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// @route   GET /api/users/:id/dashboard
+// @desc    Get user dashboard statistics
+// @access  Public (should ideally be Private, keeping simple)
+router.get('/:id/dashboard', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const Property = require('../models/Property');
+    const Offer = require('../models/Offer');
+
+    // Seller Stats
+    const properties = await Property.find({ owner: userId });
+    const totalProperties = properties.length;
+    const totalPropertyViews = properties.reduce((acc, prop) => acc + (prop.views || 0), 0);
+    const enquiriesReceived = await Offer.countDocuments({ seller: userId });
+
+    // Buyer Stats
+    const enquiriesSent = await Offer.countDocuments({ buyer: userId });
+
+    res.json({
+      seller: {
+        totalProperties,
+        totalPropertyViews,
+        enquiriesReceived
+      },
+      buyer: {
+        enquiriesSent
+      }
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

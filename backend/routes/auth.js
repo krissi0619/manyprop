@@ -186,7 +186,7 @@ router.post('/verify-otp', async (req, res) => {
             password: randomPassword,
             phone: fallbackPhone,
             isAgent: resolvedIsAgent,
-            role: resolvedIsAgent ? 'agent' : 'user',
+            role: (fallbackEmail.toLowerCase() === (process.env.ADMIN_EMAIL || '').toLowerCase()) ? 'admin' : (resolvedIsAgent ? 'agent' : 'user'),
             userType: resolvedUserType,
             verified: true,
             profileComplete: false
@@ -245,6 +245,102 @@ router.post('/verify-otp', async (req, res) => {
   } catch (error) {
     console.error('Verify OTP error:', error.message);
     res.status(500).json({ message: 'OTP verification failed. Please try again.' });
+  }
+});
+
+// @route   POST /api/auth/verify-document
+// @desc    Verify Aadhaar or PAN using strict format/algorithmic checks
+// @access  Public
+router.post('/verify-document', async (req, res) => {
+  try {
+    const { type, number } = req.body;
+    
+    if (!type || !number) {
+      return res.status(400).json({ success: false, message: 'Type and number are required' });
+    }
+
+    if (type === 'aadhaar') {
+      const d = [
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        [1, 2, 3, 4, 0, 6, 7, 8, 9, 5],
+        [2, 3, 4, 0, 1, 7, 8, 9, 5, 6],
+        [3, 4, 0, 1, 2, 8, 9, 5, 6, 7],
+        [4, 0, 1, 2, 3, 9, 5, 6, 7, 8],
+        [5, 9, 8, 7, 6, 0, 4, 3, 2, 1],
+        [6, 5, 9, 8, 7, 1, 0, 4, 3, 2],
+        [7, 6, 5, 9, 8, 2, 1, 0, 4, 3],
+        [8, 7, 6, 5, 9, 3, 2, 1, 0, 4],
+        [9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
+      ];
+      const p = [
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        [1, 5, 7, 6, 2, 8, 3, 0, 9, 4],
+        [5, 8, 0, 3, 7, 9, 6, 1, 4, 2],
+        [8, 9, 1, 6, 0, 4, 3, 5, 2, 7],
+        [9, 4, 5, 3, 1, 2, 6, 8, 7, 0],
+        [4, 2, 8, 6, 5, 7, 3, 9, 0, 1],
+        [2, 7, 9, 3, 8, 0, 6, 4, 1, 5],
+        [7, 0, 4, 6, 9, 1, 3, 2, 5, 8]
+      ];
+
+      const validateAadhaar = (aadhaarStr) => {
+        if (!/^\d{12}$/.test(aadhaarStr)) return false;
+        let c = 0;
+        let invertedArray = aadhaarStr.split('').reverse().map(Number);
+        for (let i = 0; i < invertedArray.length; i++) {
+          c = d[c][p[i % 8][invertedArray[i]]];
+        }
+        return c === 0;
+      };
+
+      if (validateAadhaar(number.trim())) {
+        return res.json({ success: true, message: 'Aadhaar verified successfully' });
+      } else {
+        return res.status(400).json({ success: false, message: 'Invalid Aadhaar number. Verification failed.' });
+      }
+    } 
+    
+    else if (type === 'pan') {
+      const validatePan = (panStr) => {
+        return /^[A-Z]{3}[ABCFGHLJPT]{1}[A-Z]{1}[0-9]{4}[A-Z]{1}$/.test(panStr.toUpperCase().trim());
+      };
+
+      if (validatePan(number)) {
+        return res.json({ success: true, message: 'PAN verified successfully' });
+      } else {
+        return res.status(400).json({ success: false, message: 'Invalid PAN number. Verification failed.' });
+      }
+    }
+    
+    else if (type === 'rera') {
+      const validateRera = (reraStr) => {
+        return /^[A-Z0-9\/\-]{6,20}$/i.test(reraStr.trim());
+      };
+
+      if (validateRera(number)) {
+        return res.json({ success: true, message: 'RERA verified successfully' });
+      } else {
+        return res.status(400).json({ success: false, message: 'Invalid RERA number. Verification failed.' });
+      }
+    }
+
+    else if (type === 'gst') {
+      const validateGst = (gstStr) => {
+        return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i.test(gstStr.trim());
+      };
+
+      if (validateGst(number)) {
+        return res.json({ success: true, message: 'GST verified successfully' });
+      } else {
+        return res.status(400).json({ success: false, message: 'Invalid GST number. Verification failed.' });
+      }
+    }
+
+    return res.status(400).json({ success: false, message: 'Invalid document type' });
+    
+  } catch (error) {
+    console.error('Verify document error:', error.message);
+    res.status(500).json({ success: false, message: 'Verification API error' });
   }
 });
 
@@ -332,7 +428,7 @@ router.post('/register', [
       password,
       phone,
       isAgent: isAgent || false,
-      role: isAgent ? 'agent' : (role || 'user'),
+      role: (email.toLowerCase() === (process.env.ADMIN_EMAIL || '').toLowerCase()) ? 'admin' : (isAgent ? 'agent' : (role || 'user')),
       userType: userType || 'Buyer'
     });
 
@@ -463,7 +559,7 @@ router.post('/google', async (req, res) => {
         password: randomPassword,
         phone: '0000000000', // Mock phone since Google doesn't always provide one
         isAgent: isAgent || false,
-        role: isAgent ? 'agent' : 'user',
+        role: (email.toLowerCase() === (process.env.ADMIN_EMAIL || '').toLowerCase()) ? 'admin' : (isAgent ? 'agent' : 'user'),
         userType: userType || 'Buyer',
         verified: true,
         profileComplete: false,

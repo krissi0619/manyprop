@@ -122,8 +122,11 @@ router.get('/', async (req, res) => {
 // @access  Public
 router.get('/:id', async (req, res) => {
   try {
-    const property = await Property.findById(req.params.id)
-      .populate('owner', 'name email phone profile.avatar');
+    const property = await Property.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { views: 1 } },
+      { new: true }
+    ).populate('owner', 'name email phone profile.avatar');
 
     if (!property) {
       return res.status(404).json({ message: 'Property not found' });
@@ -193,6 +196,34 @@ router.delete('/:id', async (req, res) => {
     }
 
     res.json({ message: 'Property removed' });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/properties/:id/report
+// @desc    Report a property
+// @access  Private
+router.post('/:id/report', async (req, res) => {
+  try {
+    const property = await Property.findById(req.params.id);
+    if (!property) return res.status(404).json({ message: 'Property not found' });
+
+    // Since we don't have auth middleware for all routes in properties.js, we expect userId in body or headers
+    // Using a simple body param for now
+    const { userId, reason } = req.body;
+    
+    if (!reason) return res.status(400).json({ message: 'Reason is required' });
+
+    property.reports.push({
+      reportedBy: userId || null, // null if anonymous or not provided
+      reason,
+      date: new Date()
+    });
+
+    await property.save();
+    res.json({ success: true, message: 'Property reported successfully' });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ message: 'Server error' });

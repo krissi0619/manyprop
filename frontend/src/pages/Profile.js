@@ -3,9 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import {
     FaUserEdit, FaHeart, FaBalanceScale, FaBell,
     FaList, FaEnvelope, FaSignOutAlt, FaBuilding,
-    FaMapMarkerAlt, FaTrash, FaEye, FaExchangeAlt
+    FaMapMarkerAlt, FaTrash, FaEye, FaExchangeAlt, FaChartBar, FaChartLine
 } from 'react-icons/fa';
 import axios from 'axios';
+import BuyerDashboard from '../components/Dashboard/BuyerDashboard';
+import SellerDashboard from '../components/Dashboard/SellerDashboard';
+import AgentDashboard from '../components/Dashboard/AgentDashboard';
+import MessagesTab from '../components/Dashboard/MessagesTab';
 import './Profile.css';
 
 /* ── ProfilePropertyRow — displays one saved / compare property ── */
@@ -59,6 +63,119 @@ const ProfilePropertyRow = ({ property, onRemove, onView }) => {
     );
 };
 
+/* ── EnquiriesTab — shows callback/visit requests for owner or sent by buyer ── */
+const EnquiriesTab = ({ user, isOwner, API }) => {
+    const [enquiries, setEnquiries] = useState([]);
+    const [loading, setLoading]     = useState(true);
+
+    useEffect(() => {
+        const load = async () => {
+            setLoading(true);
+            try {
+                const userId = user.id || user._id;
+                const url = isOwner
+                    ? `${API}/api/enquiries/owner/${userId}`
+                    : `${API}/api/enquiries/sender/${user.phone || ''}`;
+                const res = await axios.get(url);
+                setEnquiries(res.data.enquiries || []);
+            } catch (e) {
+                console.error('Failed to fetch enquiries:', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        load();
+    }, [user, isOwner, API]);
+
+    const markStatus = async (id, status) => {
+        try {
+            await axios.put(`${API}/api/enquiries/${id}/status`, { status });
+            setEnquiries(prev => prev.map(e => e._id === id ? { ...e, status } : e));
+        } catch (e) { console.error(e); }
+    };
+
+    if (loading) return <p style={{ marginTop: 16 }}>Loading enquiries...</p>;
+    if (enquiries.length === 0) return (
+        <div className="empty-state">
+            <FaEnvelope className="empty-icon" />
+            <p>{isOwner ? 'No enquiries received yet.' : 'No enquiries submitted yet.'}</p>
+        </div>
+    );
+
+    const typeLabel = { callback: '📞 Callback Request', visit: '📅 Site Visit', general: '💬 General Enquiry' };
+    const statusColor = { new: '#ea580c', seen: '#2563eb', done: '#16a34a' };
+
+    return (
+        <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {enquiries.map(enq => (
+                <div key={enq._id} style={{
+                    background: '#fff',
+                    border: '1.5px solid #f0f0f0',
+                    borderLeft: `4px solid ${statusColor[enq.status] || '#ea580c'}`,
+                    borderRadius: 12,
+                    padding: '18px 20px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+                        <div>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ea580c', background: '#fff7ed', padding: '3px 10px', borderRadius: 20 }}>
+                                {typeLabel[enq.type] || '💬 Enquiry'}
+                            </span>
+                            {enq.property?.title && (
+                                <p style={{ margin: '8px 0 0', fontWeight: 700, fontSize: '1rem' }}>{enq.property.title}</p>
+                            )}
+                            {enq.property?.address && (
+                                <p style={{ margin: '2px 0 0', fontSize: '0.82rem', color: '#888' }}>
+                                    📍 {[enq.property.address.locality, enq.property.address.city].filter(Boolean).join(', ')}
+                                </p>
+                            )}
+                        </div>
+                        <span style={{ fontSize: '0.78rem', color: '#aaa' }}>
+                            {new Date(enq.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                    </div>
+
+                    <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '8px 20px' }}>
+                        <div><small style={{ color: '#888' }}>Sender</small><p style={{ margin: 0, fontWeight: 600 }}>{enq.senderName}</p></div>
+                        <div><small style={{ color: '#888' }}>Phone</small><p style={{ margin: 0, fontWeight: 600 }}>{enq.senderPhone}</p></div>
+                        {enq.senderEmail && <div><small style={{ color: '#888' }}>Email</small><p style={{ margin: 0, fontWeight: 600 }}>{enq.senderEmail}</p></div>}
+                        {enq.type === 'visit' && enq.visitDate && (
+                            <div>
+                                <small style={{ color: '#888' }}>Visit Date & Time</small>
+                                <p style={{ margin: 0, fontWeight: 600 }}>{enq.visitDate} {enq.visitTime && `at ${enq.visitTime}`}</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {enq.message && (
+                        <p style={{ marginTop: 10, background: '#f9f9f9', padding: '10px 14px', borderRadius: 8, fontSize: '0.88rem', color: '#444', margin: '10px 0 0' }}>
+                            "{enq.message}"
+                        </p>
+                    )}
+
+                    {isOwner && (
+                        <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.8rem', color: statusColor[enq.status], fontWeight: 700, border: `1px solid ${statusColor[enq.status]}`, borderRadius: 20, padding: '2px 10px' }}>
+                                {enq.status.toUpperCase()}
+                            </span>
+                            {enq.status === 'new' && (
+                                <button onClick={() => markStatus(enq._id, 'seen')} style={{ fontSize: '0.8rem', background: '#eff6ff', color: '#2563eb', border: 'none', borderRadius: 20, padding: '4px 14px', cursor: 'pointer', fontWeight: 600 }}>
+                                    Mark as Seen
+                                </button>
+                            )}
+                            {enq.status !== 'done' && (
+                                <button onClick={() => markStatus(enq._id, 'done')} style={{ fontSize: '0.8rem', background: '#f0fdf4', color: '#16a34a', border: 'none', borderRadius: 20, padding: '4px 14px', cursor: 'pointer', fontWeight: 600 }}>
+                                    ✓ Mark Done
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+};
+
 const Profile = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
@@ -69,11 +186,14 @@ const Profile = () => {
     const [offerLoading, setOfferLoading] = useState(false);
     const [myProperties, setMyProperties] = useState([]);
     const [myPropsLoading, setMyPropsLoading] = useState(false);
+    const [dashboardStats, setDashboardStats] = useState(null);
+    const [dashboardLoading, setDashboardLoading] = useState(false);
 
     const [userFullData, setUserFullData] = useState(null);
     const [kycVerifyStatus, setKycVerifyStatus] = useState({});
     const [verifyingMsg, setVerifyingMsg] = useState('');
     const [reraVerifyStatus, setReraVerifyStatus] = useState('');
+    const [gstVerifyStatus, setGstVerifyStatus] = useState('');
     const [urlVerifyStatus, setUrlVerifyStatus] = useState('');
     const [bizSaveMsg, setBizSaveMsg] = useState('');
 
@@ -104,11 +224,34 @@ const Profile = () => {
             setCompareProps(JSON.parse(localStorage.getItem('manyprop_compare') || '[]'));
             if (storedUser) {
                 const parsedUser = JSON.parse(storedUser);
+                if (parsedUser.role === 'admin') {
+                    setActiveTab('admin-portal');
+                } else if (parsedUser.userType === 'Buyer') {
+                    setActiveTab('dashboard');
+                }
                 fetchOffers(parsedUser);
                 fetchMyProperties(parsedUser);
             }
         } catch (e) { }
-    }, [navigate, activeTab]);
+    }, [navigate]);
+
+    const fetchDashboardStats = async (currentUser) => {
+        setDashboardLoading(true);
+        try {
+            const res = await axios.get(`${API}/api/users/${currentUser.id || currentUser._id}/dashboard`);
+            setDashboardStats(res.data);
+        } catch (err) {
+            console.error('Failed to fetch dashboard stats:', err);
+        } finally {
+            setDashboardLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'dashboard' && user) {
+            fetchDashboardStats(user);
+        }
+    }, [activeTab, user]);
 
     const handleVerifyDoc = async (docType, docNumber) => {
         if (!docNumber) {
@@ -118,13 +261,14 @@ const Profile = () => {
         setVerifyingMsg(`Verifying ${docType} via Third-Party Provider...`);
         try {
             const res = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/verify-document`, {
-                docType, documentNumber: docNumber
+                type: docType, number: docNumber
             });
             setKycVerifyStatus(prev => ({ ...prev, [docType]: res.data.message }));
             alert(res.data.message);
         } catch(e) {
-            setKycVerifyStatus(prev => ({ ...prev, [docType]: 'Verification Failed' }));
-            alert('Third-Party API verification failed.');
+            const errMessage = e.response?.data?.message || 'Verification Failed';
+            setKycVerifyStatus(prev => ({ ...prev, [docType]: errMessage }));
+            alert(errMessage);
         }
         setVerifyingMsg('');
     };
@@ -138,13 +282,30 @@ const Profile = () => {
             return;
         }
         setReraVerifyStatus('verifying');
-        // RERA format: e.g. P52100027427 — at least 8 alphanumeric chars
-        const reraRegex = /^[A-Z0-9\/\-]{6,20}$/i;
-        await new Promise(r => setTimeout(r, 900)); // simulate API call
-        if (reraRegex.test(reraNum.trim())) {
-            setReraVerifyStatus('success');
-        } else {
+        try {
+            const res = await axios.post(`${API}/api/auth/verify-document`, { type: 'rera', number: reraNum });
+            if (res.data.success) {
+                setReraVerifyStatus('success');
+            }
+        } catch (e) {
             setReraVerifyStatus('invalid');
+        }
+    };
+
+    /* ── GST Number verification ─────────────────────── */
+    const handleVerifyGst = async (gstNum) => {
+        if (!gstNum || !gstNum.trim()) {
+            alert('Please enter the GST number first.');
+            return;
+        }
+        setGstVerifyStatus('verifying');
+        try {
+            const res = await axios.post(`${API}/api/auth/verify-document`, { type: 'gst', number: gstNum });
+            if (res.data.success) {
+                setGstVerifyStatus('success');
+            }
+        } catch (e) {
+            setGstVerifyStatus('invalid');
         }
     };
 
@@ -258,11 +419,13 @@ const Profile = () => {
     const handleLogout = () => {
         localStorage.removeItem('mp_token');
         localStorage.removeItem('mp_user');
-        navigate('/');
+        navigate('/');  // Go to landing page on logout
     };
 
     const BUYER_TABS = [
         { id: 'edit-profile', icon: <FaUserEdit />, label: 'Edit Profile' },
+        { id: 'dashboard', icon: <FaChartBar />, label: 'Dashboard Stats' },
+        { id: 'messages', icon: <FaEnvelope />, label: 'Messages & Chats' },
         { id: 'saved', icon: <FaHeart />, label: 'Saved Properties / Favorites' },
         { id: 'compare', icon: <FaBalanceScale />, label: 'Compare Later' },
         { id: 'alerts', icon: <FaBell />, label: 'Price Updates & Alerts' },
@@ -272,13 +435,20 @@ const Profile = () => {
 
     const SELLER_TABS = [
         { id: 'edit-profile', icon: <FaUserEdit />, label: 'Edit Profile' },
+        { id: 'dashboard', icon: <FaChartBar />, label: 'Dashboard Stats' },
+        { id: 'messages', icon: <FaEnvelope />, label: 'Messages & Chats' },
         { id: 'post-property', icon: <FaBuilding />, label: 'Post Property' },
         { id: 'listings', icon: <FaList />, label: 'Manage Listings' },
         { id: 'offers-received', icon: <FaBalanceScale />, label: 'Property Offers' },
         { id: 'enquiries', icon: <FaEnvelope />, label: 'View Enquiries' },
     ];
 
-    const TABS = isOwner ? SELLER_TABS : BUYER_TABS;
+    let TABS = isOwner ? SELLER_TABS : BUYER_TABS;
+    
+    // Add Admin Portal tab if user is an admin
+    if (user.role === 'admin') {
+        TABS = [{ id: 'admin-portal', icon: <FaChartLine />, label: 'Admin Portal' }];
+    }
 
     return (
         <div className="profile-page">
@@ -296,7 +466,12 @@ const Profile = () => {
                             )}
                         </div>
                         <h3>{user.name || 'User Name'}</h3>
-                        <p className="user-role-badge">{isOwner ? 'Property Owner / Builder' : 'Buyer'}</p>
+                        <p className="user-role-badge">
+                            {user.role === 'admin' ? 'Administrator' : 
+                             isAgent ? 'Real Estate Agent' :
+                             isBuilder ? 'Builder / Developer' :
+                             isOwner ? 'Property Owner' : 'Buyer / Tenant'}
+                        </p>
                         <p className="user-email">{user.email}</p>
                         <p className="user-phone">{user.phone}</p>
                     </div>
@@ -309,6 +484,8 @@ const Profile = () => {
                                 onClick={() => {
                                     if (tab.id === 'post-property') {
                                         navigate('/post-property');
+                                    } else if (tab.id === 'admin-portal') {
+                                        navigate('/admin/dashboard');
                                     } else {
                                         setActiveTab(tab.id);
                                     }
@@ -327,6 +504,33 @@ const Profile = () => {
 
                 {/* Content Area */}
                 <div className="profile-content">
+                    {activeTab === 'admin-portal' && user.role === 'admin' && (
+                        <div className="tab-pane" style={{ textAlign: 'center', padding: '40px 20px' }}>
+                            <h2 style={{ fontSize: '2rem', marginBottom: '15px' }}>Welcome, Administrator</h2>
+                            <p style={{ fontSize: '1.1rem', color: '#666', marginBottom: '30px' }}>Manage the entire ManyProp platform from your dedicated dashboard.</p>
+                            <button 
+                                onClick={() => navigate('/admin/dashboard')}
+                                style={{
+                                    background: 'linear-gradient(135deg, #0a0a0a, #333)',
+                                    color: '#fff',
+                                    border: 'none',
+                                    padding: '15px 40px',
+                                    borderRadius: '999px',
+                                    fontSize: '1.1rem',
+                                    fontWeight: '700',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    margin: '0 auto'
+                                }}
+                            >
+                                <FaChartLine /> Launch Admin Portal
+                            </button>
+                        </div>
+                    )}
+
                     {activeTab === 'edit-profile' && (
                         <div className="tab-pane">
                             <h2>Edit Profile</h2>
@@ -444,13 +648,29 @@ const Profile = () => {
                                         {!isBuilder && (
                                             <div className="form-field" style={{ marginTop: 16 }}>
                                                 <label className="biz-label">🧾 GST Number <span className="biz-label-hint">(Optional)</span></label>
-                                                <input
-                                                    type="text"
-                                                    id="prof-gst"
-                                                    defaultValue={userFullData?.agentDetails?.gstNumber || ''}
-                                                    className="profile-input"
-                                                    placeholder="e.g. 22AAAAA0000A1Z5"
-                                                />
+                                                <div style={{ display: 'flex', gap: '10px' }}>
+                                                    <input
+                                                        type="text"
+                                                        id="prof-gst"
+                                                        defaultValue={userFullData?.agentDetails?.gstNumber || ''}
+                                                        className="profile-input"
+                                                        placeholder="e.g. 22AAAAA0000A1Z5"
+                                                        style={{ flex: 1 }}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        className={`verify-btn ${gstVerifyStatus === 'success' ? 'verify-btn--success' : gstVerifyStatus === 'invalid' ? 'verify-btn--fail' : ''}`}
+                                                        onClick={() => handleVerifyGst(document.getElementById('prof-gst').value)}
+                                                        disabled={gstVerifyStatus === 'verifying'}
+                                                    >
+                                                        {gstVerifyStatus === 'verifying' ? '⏳ Checking...' :
+                                                         gstVerifyStatus === 'success'   ? '✅ Verified' :
+                                                         gstVerifyStatus === 'invalid'   ? '❌ Invalid' :
+                                                         'Verify GST'}
+                                                    </button>
+                                                </div>
+                                                {gstVerifyStatus === 'success' && <small className="verify-ok">✅ GSTIN format is valid and verified.</small>}
+                                                {gstVerifyStatus === 'invalid' && <small className="verify-fail">❌ Invalid GSTIN format. Please enter a valid 15-character GSTIN.</small>}
                                             </div>
                                         )}
 
@@ -519,6 +739,20 @@ const Profile = () => {
 
                             <button className="btn-save-profile" style={{ marginTop: '28px' }}>Save Changes</button>
                         </div>
+                    )}
+
+                    {activeTab === 'dashboard' && (
+                        isAgent ? (
+                            <AgentDashboard setActiveTab={setActiveTab} />
+                        ) : isOwner ? (
+                            <SellerDashboard setActiveTab={setActiveTab} />
+                        ) : (
+                            <BuyerDashboard setActiveTab={setActiveTab} />
+                        )
+                    )}
+
+                    {activeTab === 'messages' && (
+                        <MessagesTab user={user} isOwner={isOwner} />
                     )}
 
                     {activeTab === 'saved' && (
@@ -620,11 +854,8 @@ const Profile = () => {
                     {activeTab === 'enquiries' && (
                         <div className="tab-pane">
                             <h2>View Enquiries</h2>
-                            <p>{isOwner ? 'View messages and calls from buyers regarding your properties.' : 'Track messages and calls you made to owners regarding properties.'}</p>
-                            <div className="empty-state">
-                                <FaEnvelope className="empty-icon" />
-                                <p>{isOwner ? 'No enquiries received yet.' : 'No past enquiries found.'}</p>
-                            </div>
+                            <p>{isOwner ? 'Callback requests and site visit bookings from buyers for your properties.' : 'Your submitted callbacks and site visit requests.'}</p>
+                            <EnquiriesTab user={user} isOwner={isOwner} API={API} />
                         </div>
                     )}
 

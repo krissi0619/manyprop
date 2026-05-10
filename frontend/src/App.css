@@ -1,10 +1,26 @@
+/* ── App shell ──────────────────────────────────── */
 .App {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
+/* Main content — default: no top margin (landing/login pages) */
 main {
   flex: 1;
-  margin-top: 90px; /* Account for fixed header height */
+}
+
+/* When fixed header is present → push main down by header height */
+.App.has-header main {
+  margin-top: 90px;
+}
+
+/* When guest banner (40px) + header (90px) both present */
+.App.has-header.has-guest-banner main {
+  margin-top: 130px; /* 90px header + 40px guest banner */
+}
+
+/* When guest banner present → header needs to be offset below it */
+.App.has-guest-banner .header {
+  top: 40px;
 }

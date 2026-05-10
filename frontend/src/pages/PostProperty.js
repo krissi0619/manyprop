@@ -9,7 +9,7 @@ import {
 } from 'react-icons/fa';
 import { FiUser } from 'react-icons/fi';
 import Select, { components } from 'react-select';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { API_PROPERTIES } from '../api/config';
@@ -22,6 +22,16 @@ L.Icon.Default.mergeOptions({
     iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
+
+// Smoothly pans the map when lat/lng props change (triggered by search)
+const MapMover = ({ lat, lng }) => {
+    const map = useMap();
+    React.useEffect(() => {
+        if (lat && lng) map.flyTo([lat, lng], 14, { duration: 1.2 });
+    }, [lat, lng, map]);
+    return null;
+};
+
 
 const CITY_OPTIONS = [
     { value: 'Kolkata', label: 'Kolkata' },
@@ -56,6 +66,7 @@ const STEPS = [
 
 const initialForm = {
     // Step 1
+    propertyTitle: '',           // ← user-defined name for the property
     intent: 'Sell my property',
     propertyType: 'Flat / Apartment',
     // Step 2
@@ -70,20 +81,20 @@ const initialForm = {
     builtUpArea: '1054 sqft',
     floorNumber: '6 th',
     totalFloor: '12',
-    propertyAge: '1254 sqft',
-    facingDirection: '1054 sqft',
+    propertyAge: '',
+    facingDirection: '',
     amenities: ['Gym', 'Security', 'Swimming pool'],
     otherAmenities: '',
     // Step 3
-    societyName: 'Luxury Riverfront Retreat With Terrace',
-    flatNumber: '6 th',
-    reraNo: '12',
-    locality: 'Durgapur City Center',
-    pincode: '1054 sqft',
-    city: 'Durgapur',
-    state: 'West Bengal',
-    locality2: '1254 sqft',
-    city2: '1054 sqft',
+    societyName: '',
+    flatNumber: '',
+    reraNo: '',
+    locality: '',
+    pincode: '',
+    city: '',
+    state: '',
+    locality2: '',
+    city2: '',
     lat: 22.5726,
     lng: 88.3639,
     nearbyPlaces: [
@@ -91,17 +102,15 @@ const initialForm = {
         { name: 'Delhi Public school', dist: '5-6 km' },
         { name: 'Vedanta hospital', dist: '4-5 km' },
         { name: 'Myopia clinic', dist: '1-2 km' },
-        { name: 'Delhi university', dist: '6-8 km' },
-        { name: 'Indra gandhi collage', dist: '7-8 km' }
     ],
     // Step 4
     images: [], // { url, file, category }
     video: null, // { url, file }
     // Step 5
-    expectedPrice: '6999.00',
+    expectedPrice: '',
     priceNegotiable: 'Yes open to offers',
     transactionType: 'New booking',
-    availableFrom: 'Immidiate',
+    availableFrom: 'Immediate',
     ownershipType: 'Free hold',
     boostVisibility: 'FREE'
 };
@@ -114,8 +123,59 @@ const PostProperty = () => {
     const [submitted, setSubmitted] = useState(false);
     const [error, setError] = useState('');
     const [headerCities, setHeaderCities] = useState([CITY_OPTIONS[0]]);
+    const [mapSearch, setMapSearch] = useState('');
+    const [mapSearching, setMapSearching] = useState(false);
     const fileInputRef = useRef(null);
     const videoInputRef = useRef(null);
+
+    // Geocode a search query and move the map
+    const handleMapSearch = async () => {
+        if (!mapSearch.trim()) return;
+        setMapSearching(true);
+        try {
+            const res = await axios.get(
+                `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=in&q=${encodeURIComponent(mapSearch)}`
+            );
+            if (res.data && res.data.length > 0) {
+                const { lat, lon, display_name } = res.data[0];
+                const newLat = parseFloat(lat);
+                const newLng = parseFloat(lon);
+                update('lat', newLat);
+                update('lng', newLng);
+
+                // Reverse geocode for address details
+                const rev = await axios.get(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+                );
+                if (rev.data && rev.data.address) {
+                    const addr = rev.data.address;
+                    const city    = addr.city || addr.town || addr.village || addr.county || '';
+                    const state   = addr.state || '';
+                    const pincode = addr.postcode || '';
+                    const locality = addr.suburb || addr.neighbourhood || addr.road || '';
+                    setForm(prev => ({
+                        ...prev,
+                        city, state, pincode, locality,
+                        city2: city, locality2: locality,
+                        nearbyPlaces: [
+                            { name: `${locality || city} Public School`, dist: '1-2 km' },
+                            { name: `${locality || city} General Hospital`, dist: '2-3 km' },
+                            { name: `${locality || city} Shopping Mall`, dist: '3-4 km' },
+                            { name: `${locality || city} Metro / Bus Station`, dist: '1-2 km' },
+                            { name: `${locality || city} Park`, dist: '0.5-1 km' },
+                        ]
+                    }));
+                }
+            } else {
+                setError('Location not found. Try a more specific name.');
+                setTimeout(() => setError(''), 3000);
+            }
+        } catch (e) {
+            console.error('Map search failed', e);
+        } finally {
+            setMapSearching(false);
+        }
+    };
 
     const progress = step === 1 ? 11 : step === 2 ? 24 : step === 3 ? 36 : step === 4 ? 50 : step === 5 ? 70 : 100;
 
@@ -253,7 +313,7 @@ const PostProperty = () => {
                 const res = await axios.post(`${API_PROPERTIES.replace('/api/properties', '')}/api/upload`, formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-                return `${API_PROPERTIES.replace('/api/properties', '')}${res.data.url}`;
+                return res.data.url;
             };
 
             // Upload images
@@ -271,13 +331,26 @@ const PostProperty = () => {
                 videoUrl = await uploadFile(form.video.file);
             }
 
+            // Derive the best title
+            const finalTitle = form.propertyTitle.trim() ||
+                form.societyName.trim() ||
+                `${form.bedrooms} BHK ${form.propertyType} in ${form.city || 'India'}`;
+
             const payload = {
                 owner: ownerId,
-                title: form.societyName || `${form.bedrooms} BHK ${form.propertyType}`,
+                title: finalTitle,
                 description: form.aboutProperty || `Beautiful ${form.bedrooms} BHK ${form.propertyType} in ${form.city}.`,
-                price: parseFloat(form.expectedPrice.replace(/,/g, '')) || 0,
+                price: parseFloat((form.expectedPrice || '0').replace(/,/g, '')) || 0,
                 priceType: form.intent.includes('Rent') ? 'rent' : 'sale',
                 propertyType: mappedType,
+                postedBy: 'Owner',
+                agentContact: {
+                    name: storedUser.name || 'Owner',
+                    phone: storedUser.phone || '',
+                    email: storedUser.email || '',
+                    company: 'Self',
+                    rating: 5.0
+                },
                 address: {
                     street: form.societyName,
                     city: form.city,
@@ -300,7 +373,9 @@ const PostProperty = () => {
                     reraNo: form.reraNo,
                     nearbyPlaces: form.nearbyPlaces
                 },
-                images: uploadedImages.length > 0 ? uploadedImages : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80'],
+                images: uploadedImages.length > 0
+                    ? uploadedImages
+                    : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80'],
                 video: videoUrl
             };
             
@@ -395,6 +470,22 @@ const PostProperty = () => {
                 <div className="pp-content-box">
                     {step === 1 && (
                         <div className="step-slide">
+                            {/* ── Property Name ──────────────────────────── */}
+                            <div className="form-row-new" style={{ marginBottom: '28px' }}>
+                                <label className="row-label" style={{ fontSize: '0.93rem', fontWeight: 700, marginBottom: 8, display: 'block' }}>
+                                    Property Name / Title <span style={{ color: '#e85c27' }}>*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className="chip-input-small"
+                                    style={{ width: '100%', padding: '14px 18px', fontSize: '1rem', borderRadius: '12px', border: '1.5px solid #ddd', fontFamily: 'inherit' }}
+                                    placeholder="e.g. Siddhi Vinayak Residency, Green Park Villa..."
+                                    value={form.propertyTitle}
+                                    onChange={e => update('propertyTitle', e.target.value)}
+                                />
+                                <p style={{ fontSize: '0.76rem', color: '#999', marginTop: 6 }}>Give your listing a catchy, descriptive name that buyers will remember.</p>
+                            </div>
+
                             <h2 className="step-heading-main">I want to</h2>
                             <div className="intent-grid">
                                 <div className={`intent-card ${form.intent === 'Sell my property' ? 'selected' : ''}`} onClick={() => update('intent', 'Sell my property')}>
@@ -539,12 +630,36 @@ const PostProperty = () => {
                             <h2 className="step-heading-main">Where is the property?</h2>
                             <p className="step-desc-text-small">Exact location helps buyers find you and builds trust with verified address.</p>
 
+                            {/* ── Map Search Bar ──────────────────────── */}
+                            <div className="map-search-bar">
+                                <div className="map-search-input-wrap">
+                                    <FaMapMarkerAlt className="map-search-pin" />
+                                    <input
+                                        type="text"
+                                        className="map-search-input"
+                                        placeholder="Search city, area, landmark or pin code in India..."
+                                        value={mapSearch}
+                                        onChange={e => setMapSearch(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && handleMapSearch()}
+                                    />
+                                </div>
+                                <button
+                                    className="map-search-btn"
+                                    onClick={handleMapSearch}
+                                    disabled={mapSearching}
+                                >
+                                    {mapSearching ? '⏳' : '🔍 Search'}
+                                </button>
+                            </div>
+
                             <div className="map-container-wrap">
-                                <MapContainer center={[form.lat, form.lng]} zoom={13} style={{ height: '100%', width: '100%' }}>
+                                <MapContainer center={[form.lat, form.lng]} zoom={13} key={`${form.lat}-${form.lng}`} style={{ height: '100%', width: '100%' }}>
                                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                                     <LocationMarker />
+                                    <MapMover lat={form.lat} lng={form.lng} />
                                 </MapContainer>
                             </div>
+                            <p className="step-desc-text-small" style={{ marginTop: 8 }}>📍 Use Search to jump to your location, or click the map to pin it precisely.</p>
 
                             <div className="input-grid-2col mt-4">
                                 <div className="input-item-new full-width"><label>Society name/ Project name</label><input type="text" value={form.societyName} onChange={e => update('societyName', e.target.value)} /></div>
@@ -597,12 +712,14 @@ const PostProperty = () => {
                                 </div>
                                 <div className="media-main-preview">
                                     <h3 className="media-label-header">Video Tour</h3>
-                                    <div className="main-img-box video-box upload-trigger" onClick={() => videoInputRef.current.click()}>
+                                    <div className="main-img-box video-box upload-trigger" onClick={() => !form.video && videoInputRef.current.click()}>
                                         {form.video ? (
-                                            <>
-                                                <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80" alt="Video Placeholder" />
-                                                <div className="play-btn-large"><div className="play-triangle"></div></div>
-                                            </>
+                                            <video
+                                                src={form.video.url}
+                                                controls
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }}
+                                                onClick={e => e.stopPropagation()}
+                                            />
                                         ) : (
                                             <div className="upload-placeholder">
                                                 <FaCloudUploadAlt />
@@ -611,6 +728,12 @@ const PostProperty = () => {
                                         )}
                                         <input type="file" hidden ref={videoInputRef} accept="video/*" onChange={handleVideoChange} />
                                     </div>
+                                    {form.video && (
+                                        <button
+                                            style={{ marginTop: 8, fontSize: '0.78rem', color: '#e85c27', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                                            onClick={() => update('video', null)}
+                                        >✕ Remove video</button>
+                                    )}
                                 </div>
                             </div>
 

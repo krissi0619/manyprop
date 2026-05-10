@@ -1,0 +1,276 @@
+/* ═══════════════════════════════════════════════════════
+   Landing Page — ManyProp  (Full-screen dark design)
+═══════════════════════════════════════════════════════ */
+
+/* ── Tokens ──────────────────────────────────────────── */
+:root {
+  --l-bg:          #111111;
+  --l-surface:     #1c1c1c;
+  --l-surface-2:   #242424;
+  --l-border:      rgba(255,255,255,0.08);
+  --l-border-2:    rgba(255,255,255,0.16);
+  --l-text-primary:#f2f2f2;
+  --l-text-sec:    #a0a0a0;
+  --l-text-muted:  #555;
+  --l-accent:      #e85c27;
+  --l-accent-light:#f07a42;
+  --l-accent-glow: rgba(232,92,39,0.25);
+  --l-gold:        #c9a96e;
+  --l-radius:      18px;
+  --l-radius-pill: 999px;
+}
+
+/* ── Hard reset for landing context ─────────────────── */
+.landing-page *,
+.landing-page *::before,
+.landing-page *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Page wrapper — FULL SCREEN ──────────────────────── */
+.landing-page {
+  position: fixed;
+  inset: 0;                  /* top:0 right:0 bottom:0 left:0 */
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  background-color: var(--l-bg);
+  background-image:
+    radial-gradient(ellipse 70% 50% at 50% -5%,  rgba(232,92,39,0.14) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 85%,  rgba(201,169,110,0.07) 0%, transparent 55%);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  z-index: 0;
+  /* entrance */
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+.landing-page.landing-loaded {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Ambient orbs ──────────────────────────────────── */
+.landing-orb {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(90px);
+  z-index: 0;
+}
+.landing-orb-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(232,92,39,0.18) 0%, transparent 70%);
+  top: -180px; left: 50%; transform: translateX(-50%);
+  animation: orbPulse 7s ease-in-out infinite alternate;
+}
+.landing-orb-2 {
+  width: 350px; height: 350px;
+  background: radial-gradient(circle, rgba(201,169,110,0.10) 0%, transparent 70%);
+  bottom: 0; right: -80px;
+  animation: orbPulse 9s ease-in-out infinite alternate-reverse;
+}
+@keyframes orbPulse {
+  from { opacity: 0.5; transform: scale(1); }
+  to   { opacity: 1;   transform: scale(1.18); }
+}
+.landing-orb-1 { transform: translateX(-50%); }
+
+/* ── Scrollable inner ────────────────────────────────── */
+.landing-inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 460px;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 28px 40px;
+  gap: 0;
+}
+
+/* ── Brand ─────────────────────────────────────────── */
+.landing-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 36px;
+  align-self: center;
+}
+.landing-logo-mark {
+  width: 46px; height: 46px;
+  background: linear-gradient(135deg, var(--l-accent), var(--l-accent-light));
+  border-radius: 13px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  box-shadow: 0 0 24px var(--l-accent-glow);
+  flex-shrink: 0;
+}
+.landing-logo-text {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--l-text-primary);
+  letter-spacing: -0.04em;
+}
+
+/* ── Hero text ─────────────────────────────────────── */
+.landing-hero-text {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.landing-headline {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--l-text-primary);
+  line-height: 1.18;
+  letter-spacing: -0.05em;
+  margin-bottom: 12px;
+}
+.landing-subline {
+  font-size: 1rem;
+  color: var(--l-text-sec);
+  line-height: 1.6;
+}
+
+/* ── Hero image ────────────────────────────────────── */
+.landing-hero-img-wrapper {
+  width: 100%;
+  border-radius: var(--l-radius);
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 36px;
+  border: 1px solid var(--l-border);
+  box-shadow: 0 0 0 1px var(--l-border), 0 24px 70px rgba(0,0,0,0.6);
+  flex-shrink: 0;
+}
+.landing-hero-img {
+  width: 100%;
+  aspect-ratio: 16/10;
+  object-fit: cover;
+  display: block;
+  filter: brightness(0.7) saturate(0.85);
+}
+.landing-img-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, transparent 25%, rgba(12,12,12,0.65) 100%);
+}
+
+/* ── Floating chips ────────────────────────────────── */
+.landing-chip {
+  position: absolute;
+  background: rgba(18,18,18,0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--l-border-2);
+  border-radius: var(--l-radius-pill);
+  padding: 7px 16px;
+  display: flex; align-items: center; gap: 7px;
+  white-space: nowrap;
+}
+.landing-chip-1 { top: 14px; left: 14px; animation: chipFloat 4s ease-in-out infinite alternate; }
+.landing-chip-2 { top: 14px; right: 14px; animation: chipFloat 4s ease-in-out 1.3s infinite alternate; }
+.landing-chip-3 { bottom: 16px; left: 50%; transform: translateX(-50%); animation: chipFloatCenter 4s ease-in-out 0.7s infinite alternate; }
+@keyframes chipFloat { from { transform: translateY(0); } to { transform: translateY(-6px); } }
+@keyframes chipFloatCenter { from { transform: translateX(-50%) translateY(0); } to { transform: translateX(-50%) translateY(-6px); } }
+
+.chip-num   { font-size: 0.88rem; font-weight: 800; color: var(--l-accent); }
+.chip-label { font-size: 0.74rem; font-weight: 500; color: var(--l-text-sec); }
+
+/* ── CTA Buttons ───────────────────────────────────── */
+.landing-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  margin-bottom: 36px;
+}
+.landing-btn {
+  width: 100%;
+  padding: 17px 24px;
+  border-radius: var(--l-radius-pill);
+  font-size: 1.02rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.22s ease;
+  font-family: inherit;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+.landing-btn-primary {
+  background: linear-gradient(135deg, var(--l-accent) 0%, var(--l-accent-light) 100%);
+  color: #fff;
+  box-shadow: 0 4px 24px var(--l-accent-glow);
+}
+.landing-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 36px rgba(232,92,39,0.45);
+}
+.landing-btn-outline {
+  background: transparent;
+  color: var(--l-text-primary);
+  border: 1.5px solid var(--l-border-2);
+}
+.landing-btn-outline:hover {
+  background: var(--l-surface);
+  border-color: rgba(255,255,255,0.28);
+}
+.landing-btn-ghost {
+  background: none; border: none;
+  color: var(--l-text-sec);
+  font-size: 0.92rem; font-weight: 500;
+  cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px; transition: color 0.2s;
+}
+.landing-btn-ghost:hover { color: var(--l-text-primary); }
+.landing-btn-ghost .arrow { transition: transform 0.2s; }
+.landing-btn-ghost:hover .arrow { transform: translateX(4px); }
+
+/* ── Why ManyProp ─────────────────────────────────── */
+.landing-why {
+  width: 100%;
+  text-align: center;
+  border-top: 1px solid var(--l-border);
+  padding-top: 28px;
+}
+.landing-why-title {
+  font-size: 0.72rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--l-text-muted); margin-bottom: 16px;
+}
+.landing-why-chips {
+  display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
+}
+.landing-why-chip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 16px;
+  background: var(--l-surface);
+  border: 1px solid var(--l-border);
+  border-radius: var(--l-radius-pill);
+  font-size: 0.82rem; font-weight: 500;
+  color: var(--l-text-sec);
+  transition: all 0.2s;
+}
+.landing-why-chip:hover {
+  background: var(--l-surface-2);
+  border-color: var(--l-border-2);
+  color: var(--l-text-primary);
+}
+.why-icon { font-size: 0.9rem; }
+
+/* ── Mobile ─────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .landing-inner { padding: 36px 20px 32px; }
+  .landing-headline { font-size: 1.8rem; }
+  .landing-why-chips { gap: 8px; }
+  .landing-why-chip { font-size: 0.76rem; padding: 7px 12px; }
+}

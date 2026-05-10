@@ -157,7 +157,7 @@ const Login = () => {
   const goHome = (token, user) => {
     localStorage.setItem('mp_token', token);
     localStorage.setItem('mp_user', JSON.stringify(user));
-    navigate('/');
+    navigate('/home');
     window.location.reload();
   };
 
@@ -191,7 +191,7 @@ const Login = () => {
     }
   };
 
-  const handleClose = () => navigate('/');
+  const handleClose = () => navigate('/home');
 
   // ── Card nav header (shared) ──────────────────────────
   const CardNav = ({ showBack = true, customBack }) => (
@@ -251,7 +251,12 @@ const Login = () => {
 
       if (res.data.success) {
         const { token, user, isNewUser } = res.data;
-        if (isNewUser || !user.profileComplete) {
+        if (user.role === 'admin') {
+          localStorage.setItem('mp_token', token);
+          localStorage.setItem('mp_user', JSON.stringify(user));
+          navigate('/admin/dashboard');
+          window.location.reload();
+        } else if (isNewUser || !user.profileComplete) {
           // New user or incomplete profile → show profile step
           setAuthToken(token);
           setAuthUser(user);
@@ -417,19 +422,22 @@ const Login = () => {
   // Step 1 – Send OTP from login screen
   const handleLoginSendOTP = async (e) => {
     e.preventDefault();
-    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginPhone);
-    const isPhone = /^\d{10}$/.test(loginPhone);
+    const raw = (loginPhone || '').trim();
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw);
+    const digitsOnly = raw.replace(/\D/g, '');
+    const isPhone = digitsOnly.length === 10;
 
     if (!isEmail && !isPhone) {
-      setError('Please enter a valid 10-digit phone number or email address');
+      setError('Please enter a valid 10-digit mobile number or email address');
       return;
     }
-    
+
     setFlow('login');
     if (isEmail) {
-      await apiSendOTP('', { email: loginPhone });
+      await apiSendOTP('', { email: raw });
     } else {
-      await apiSendOTP(loginPhone);
+      // Always send clean 10-digit number
+      await apiSendOTP(digitsOnly);
     }
   };
 
@@ -448,10 +456,10 @@ const Login = () => {
             name: regData.name,
             email: regData.email,
             isAgent: regData.isAgent,
-            userType: regData.isAgent ? 'Owner' : 'Buyer',
+            userType: regData.isAgent ? 'Agent' : 'Buyer / Tenant',
           }
         : flow === 'google'
-        ? { isAgent: regData.isAgent, userType: regData.isAgent ? 'Owner' : 'Buyer' }
+        ? { isAgent: regData.isAgent, userType: regData.isAgent ? 'Agent' : 'Buyer / Tenant' }
         : {};
     await apiVerifyOTP(phone, otpVal, extras);
   };
@@ -480,7 +488,12 @@ const Login = () => {
         
         if (res.data.success) {
           const { token, user, isNewUser } = res.data;
-          if (isNewUser || !user.profileComplete) {
+          if (user.role === 'admin') {
+            localStorage.setItem('mp_token', token);
+            localStorage.setItem('mp_user', JSON.stringify(user));
+            navigate('/admin/dashboard');
+            window.location.reload();
+          } else if (isNewUser || !user.profileComplete) {
             setAuthToken(token);
             setAuthUser(user);
             setProfileData(prev => ({ 
@@ -503,8 +516,9 @@ const Login = () => {
 
   const handleGoogleAccountContinue = async (e) => {
     e.preventDefault();
-    if (!regData.phone || regData.phone.length !== 10) {
-      setError('Please enter a valid 10-digit phone number');
+    const cleanPhone = (regData.phone || '').replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+      setError('Please enter a valid 10-digit mobile number');
       return;
     }
     await apiSendOTP(regData.phone, {
@@ -519,8 +533,9 @@ const Login = () => {
   const handleCreateDetailsContinue = async (e) => {
     e.preventDefault();
     if (!regData.name.trim()) { setError('Please enter your name'); return; }
-    if (!regData.phone || regData.phone.length !== 10) {
-      setError('Please enter a valid 10-digit phone number');
+    const cleanPhone = (regData.phone || '').replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+      setError('Please enter a valid 10-digit mobile number');
       return;
     }
     setFlow('register');
@@ -1453,12 +1468,15 @@ const Login = () => {
                 type="button" 
                 className="kyc-badge verify" 
                 style={{ border: 'none', cursor: 'pointer' }}
-                onClick={() => {
-                  if (kycData.aadhaarNumber.trim().length > 0) {
-                    setKycData(p => ({ ...p, aadhaarVerified: true }));
-                    clearError();
-                  } else {
-                    setError('Please enter a valid Aadhaar number first');
+                onClick={async () => {
+                  try {
+                    const res = await axios.post(`${API_AUTH}/verify-document`, { type: 'aadhaar', number: kycData.aadhaarNumber });
+                    if (res.data.success) {
+                      setKycData(p => ({ ...p, aadhaarVerified: true }));
+                      clearError();
+                    }
+                  } catch (err) {
+                    setError(err.response?.data?.message || 'Invalid Aadhaar number');
                   }
                 }}
               >Verify</button>
@@ -1482,12 +1500,15 @@ const Login = () => {
                 type="button" 
                 className="kyc-badge verify" 
                 style={{ border: 'none', cursor: 'pointer' }}
-                onClick={() => {
-                  if (kycData.panNumber.trim().length > 0) {
-                    setKycData(p => ({ ...p, panVerified: true }));
-                    clearError();
-                  } else {
-                    setError('Please enter a valid PAN number first');
+                onClick={async () => {
+                  try {
+                    const res = await axios.post(`${API_AUTH}/verify-document`, { type: 'pan', number: kycData.panNumber });
+                    if (res.data.success) {
+                      setKycData(p => ({ ...p, panVerified: true }));
+                      clearError();
+                    }
+                  } catch (err) {
+                    setError(err.response?.data?.message || 'Invalid PAN number');
                   }
                 }}
               >Verify</button>

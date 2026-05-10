@@ -86,7 +86,7 @@ const Header = () => {
     localStorage.removeItem('mp_token');
     setUser(null);
     setActiveDropdown(null);
-    navigate('/');
+    navigate('/home');
   };
 
   const toggleDropdown = (menu) => {
@@ -186,7 +186,7 @@ const Header = () => {
           </div>
 
           {/* Center Logo */}
-          <Link to="/" className="logo">
+          <Link to="/home" className="logo">
             <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
               {/* Dark rounded square background */}
               <rect width="44" height="44" rx="10" fill="#111111"/>
@@ -234,9 +234,16 @@ const Header = () => {
               ) : (
                 <Link to="/login" className="login-btn">Login</Link>
               )}
-              <Link to="/post-property" className="post-property-btn">
+              <button
+                className="post-property-btn"
+                style={{ border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+                onClick={() => {
+                  const token = localStorage.getItem('mp_token');
+                  navigate(token ? '/post-property' : '/login');
+                }}
+              >
                 Post Property <span className="free-badge">FREE</span>
-              </Link>
+              </button>
             </div>
           </div>
 

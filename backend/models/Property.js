@@ -111,6 +111,15 @@ const PropertySchema = new mongoose.Schema({
     email: String,
     company: String
   },
+  views: {
+    type: Number,
+    default: 0
+  },
+  reports: [{
+    reportedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    reason: String,
+    date: { type: Date, default: Date.now }
+  }],
   createdAt: {
     type: Date,
     default: Date.now

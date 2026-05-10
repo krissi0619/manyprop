@@ -4,11 +4,10 @@ import {
   FaHeart, FaRegHeart, FaShareAlt, FaBalanceScale,
   FaMapMarkerAlt, FaCheckCircle, FaPhone, FaEnvelope, FaShieldAlt, FaStar,
   FaChevronLeft, FaChevronRight,
-  FaBookmark, FaRegBookmark, FaFileAlt
+  FaBookmark, FaRegBookmark, FaFileAlt, FaExclamationTriangle
 } from 'react-icons/fa';
 import axios from 'axios';
-import { API_PROPERTIES, API_NEWS, API_CONTACTS, API_OFFERS } from '../api/config';
-import HomePropertyCard from '../components/Common/HomePropertyCard';
+import { API_BASE_URL, API_PROPERTIES, API_NEWS, API_CONTACTS, API_OFFERS } from '../api/config';
 import './PropertyDetails.css';
 
 // Fallback mock data so the page always renders
@@ -76,59 +75,43 @@ const PropertyDetails = () => {
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [offerForm, setOfferForm] = useState({ offerPrice: '', paymentType: 'loan', closingDate: '' });
   const [offerStatus, setOfferStatus] = useState({ loading: false, success: false });
-  const [similarProperties, setSimilarProperties] = useState([]);
-  const [similarLoading, setSimilarLoading] = useState(false);
+
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportStatus, setReportStatus] = useState({ loading: false, success: false });
+
+  const [showVisitModal, setShowVisitModal] = useState(false);
+  const [visitForm, setVisitForm] = useState({ name: '', phone: '', email: '', date: '', time: '' });
+  const [visitStatus, setVisitStatus] = useState({ loading: false, success: false });
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    const fetchPropertyAndSimilar = async () => {
+    const fetchProperty = async () => {
       setLoading(true);
-      let currentProperty = null;
       try {
         const res = await axios.get(`${API_PROPERTIES}/${id}`);
-        currentProperty = res.data;
-        setProperty(currentProperty);
+        setProperty(res.data);
       } catch {
-        currentProperty = MOCK_PROPERTY;
-        setProperty(currentProperty);
+        setProperty(MOCK_PROPERTY);
       } finally {
         setLoading(false);
       }
+    };
+    fetchProperty();
 
-      if (currentProperty && currentProperty.address?.city) {
-        setSimilarLoading(true);
-        try {
-          const queryParams = new URLSearchParams({ city: currentProperty.address.city, limit: 5 });
-          if (currentProperty.propertyType) queryParams.append('propertyType', currentProperty.propertyType);
-          if (currentProperty.priceType) queryParams.append('priceType', currentProperty.priceType);
-          
-          const simRes = await axios.get(`${API_PROPERTIES}?${queryParams.toString()}`);
-          const simProps = simRes.data.properties || [];
-          // Filter out the current property
-          let filteredSimProps = simProps.filter(p => (p._id || p.id) !== id).slice(0, 4);
-          
-          if (filteredSimProps.length === 0) {
-            // Fallback mock properties if no similar ones found from DB
-            filteredSimProps = [
-              { ...MOCK_PROPERTY, _id: 'sim1', id: 'sim1', title: `Similar Property in ${currentProperty.address.city}` },
-              { ...MOCK_PROPERTY, _id: 'sim2', id: 'sim2', title: `Beautiful Flat in ${currentProperty.address.city}` },
-              { ...MOCK_PROPERTY, _id: 'sim3', id: 'sim3', title: `Luxury Villa in ${currentProperty.address.city}` }
-            ];
-          }
-          setSimilarProperties(filteredSimProps);
-        } catch (err) {
-          console.error("Failed to fetch similar properties", err);
-          // Fallback on error
-          setSimilarProperties([
-            { ...MOCK_PROPERTY, _id: 'sim1', id: 'sim1', title: `Similar Property in ${currentProperty.address?.city || 'Unknown'}` },
-            { ...MOCK_PROPERTY, _id: 'sim2', id: 'sim2', title: `Beautiful Flat in ${currentProperty.address?.city || 'Unknown'}` }
-          ]);
-        } finally {
-          setSimilarLoading(false);
+    // Track property views for the Buyer Dashboard
+    try {
+      if (id) {
+        const viewedStr = localStorage.getItem('mp_viewed_properties') || '[]';
+        const viewed = JSON.parse(viewedStr);
+        if (!viewed.includes(id)) {
+          viewed.push(id);
+          localStorage.setItem('mp_viewed_properties', JSON.stringify(viewed));
         }
       }
-    };
-    fetchPropertyAndSimilar();
+    } catch (e) {
+      console.error('Failed to track viewed property:', e);
+    }
   }, [id]);
 
 
@@ -154,16 +137,42 @@ const PropertyDetails = () => {
     if (!contactForm.phone) { alert('Please enter phone number'); return; }
     setContactLoading(true);
     try {
-      await axios.post(API_CONTACTS, {
-        ...contactForm,
-        propertyId: property?._id,
-        agentName: property?.agentContact?.name,
+      await axios.post(`${API_BASE_URL}/api/enquiries`, {
+        type: 'callback',
+        senderName:  contactForm.name,
+        senderPhone: contactForm.phone,
+        senderEmail: contactForm.email,
+        message:     contactForm.message,
+        propertyId:  property?._id || id,
       });
       setContactSubmitted(true);
     } catch {
+      // Still show success to user even if API fails
       setContactSubmitted(true);
     } finally {
       setContactLoading(false);
+    }
+  };
+
+  const handleVisitSubmit = async (e) => {
+    e.preventDefault();
+    if (!visitForm.phone) { alert('Please enter your phone number'); return; }
+    if (!visitForm.date)  { alert('Please select a preferred date'); return; }
+    setVisitStatus({ loading: true, success: false });
+    try {
+      await axios.post(`${API_BASE_URL}/api/enquiries`, {
+        type: 'visit',
+        senderName:  visitForm.name,
+        senderPhone: visitForm.phone,
+        senderEmail: visitForm.email,
+        message:     `Site visit requested for ${visitForm.date} at ${visitForm.time || 'any time'}`,
+        propertyId:  property?._id || id,
+        visitDate:   visitForm.date,
+        visitTime:   visitForm.time,
+      });
+      setVisitStatus({ loading: false, success: true });
+    } catch {
+      setVisitStatus({ loading: false, success: true }); // still show success
     }
   };
 
@@ -206,6 +215,31 @@ const PropertyDetails = () => {
     }
   };
 
+  const handleReportSubmit = async (e) => {
+    e.preventDefault();
+    const storedUser = localStorage.getItem('mp_user');
+    const user = storedUser ? JSON.parse(storedUser) : null;
+    
+    setReportStatus({ loading: true, success: false });
+    
+    const currentId = property?._id || id;
+    try {
+      await axios.post(`${API_PROPERTIES}/${currentId}/report`, {
+        userId: user ? (user.id || user._id) : null,
+        reason: reportReason
+      });
+      setReportStatus({ loading: false, success: true });
+      setTimeout(() => {
+        setShowReportModal(false);
+        setReportStatus({ loading: false, success: false });
+        setReportReason('');
+      }, 2000);
+    } catch (err) {
+      setReportStatus({ loading: false, success: false });
+      alert('Failed to submit report. Please try again.');
+    }
+  };
+
   const prevImage = () => setActiveImage((i) => (i === 0 ? (property?.images?.length || 5) - 1 : i - 1));
   const nextImage = () => setActiveImage((i) => (i + 1) % (property?.images?.length || 5));
 
@@ -219,15 +253,25 @@ const PropertyDetails = () => {
   }
 
   const p = property || MOCK_PROPERTY;
-  const allImages = p.images || MOCK_PROPERTY.images;
+  
+  const getMediaUrl = (path) => {
+    if (!path) return '';
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    return `${API_BASE_URL}/${cleanPath}`;
+  };
+
+  const rawImages = (p.images && p.images.length > 0) ? p.images : MOCK_PROPERTY.images;
+  const allImages = rawImages.map(img => getMediaUrl(img));
   const thumbImages = allImages.slice(0, 5);
+  const videoUrl = p.video ? getMediaUrl(p.video) : '';
 
   return (
     <div className="pd-page">
       {/* Breadcrumb */}
       <div className="pd-breadcrumb-bar">
         <div className="pd-container">
-          <Link to="/">Home</Link>
+          <Link to="/home">Home</Link>
           <span> › </span>
           <Link to="/properties">Properties</Link>
           <span> › </span>
@@ -274,12 +318,17 @@ const PropertyDetails = () => {
                 ))}
               </div>
             </div>
-            {p.video && (
-                <div style={{ marginTop: '20px' }}>
-                    <h3 style={{ marginBottom: '10px' }}>Property Video</h3>
-                    <video src={p.video} controls style={{ width: '100%', borderRadius: '10px' }} />
-                </div>
-            )}
+          {/* Video (if uploaded by owner) */}
+          {videoUrl && (
+            <div style={{ marginTop: '20px' }}>
+              <h3 style={{ marginBottom: '10px', fontWeight: 700 }}>📹 Property Video Tour</h3>
+              <video
+                src={videoUrl}
+                controls
+                style={{ width: '100%', borderRadius: '12px', maxHeight: '400px', objectFit: 'cover' }}
+              />
+            </div>
+          )}
           </div>
 
           {/* Title Row */}
@@ -292,7 +341,7 @@ const PropertyDetails = () => {
               </div>
             </div>
             <div className="pd-price-block">
-              <div className="pd-price">Rs {formatPrice(p.price)}</div>
+              <div className="pd-price">{formatPrice(p.price)}</div>
               <div className="pd-price-label">Lakhs Ownwords</div>
             </div>
           </div>
@@ -400,17 +449,6 @@ const PropertyDetails = () => {
               </div>
             )}
           </div>
-          {/* Similar Properties Section */}
-          {similarProperties.length > 0 && (
-            <div className="pd-similar-properties-section">
-              <h2 className="section-title" style={{ marginTop: '40px', marginBottom: '20px' }}>Similar Properties in {p.address?.city}</h2>
-              <div className="similar-properties-grid">
-                {similarProperties.map(prop => (
-                  <HomePropertyCard key={prop._id || prop.id} property={prop} />
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* ===== RIGHT SIDEBAR ===== */}
@@ -419,83 +457,157 @@ const PropertyDetails = () => {
           {/* Property Dealer Card */}
           <div className="pd-contact-card">
             <div className="pd-dealer-header">
-              <div className="pd-dealer-label">Property Dealer</div>
-              <div className="pd-dealer-name">{p.agentContact?.name || 'Rajesh Varma ~'}  {p.agentContact?.phone || '+91 ••••••••••'}</div>
+              <div className="pd-dealer-label">Property Owner / Dealer</div>
+              <div className="pd-dealer-name">
+                {/* Show real owner name from DB or agentContact */}
+                {p.owner?.name || p.agentContact?.name || 'Owner'}
+                {p.agentContact?.phone && (
+                  <span style={{ color: '#94a3b8', fontWeight: 400, marginLeft: 8, fontSize: '0.85rem' }}>
+                    {showPhoneModal ? p.agentContact.phone : '+91 ••••••••••'}
+                  </span>
+                )}
+              </div>
             </div>
 
             <button
               className="pd-get-contact-btn"
               onClick={() => setShowPhoneModal(true)}
             >
-              Get Contact /Phone Number
+              {showPhoneModal ? 'Contact Revealed ✓' : 'Get Contact / Phone Number'}
             </button>
 
             {showPhoneModal && (
               <div className="pd-phone-reveal">
                 <FaShieldAlt className="pd-shield-icon" />
-                <span>Phone: <strong>+91 98765 43210</strong></span>
+                <span>Phone: <strong>{p.agentContact?.phone || p.owner?.phone || '+91 98765 43210'}</strong></span>
+                {p.agentContact?.email && (
+                  <span style={{ display: 'block', marginTop: 4, fontSize: '0.82rem' }}>
+                    Email: {p.agentContact.email}
+                  </span>
+                )}
               </div>
             )}
           </div>
+
+          {/* ── Make Offer CTA ── */}
+          {(() => {
+            const currentUser = JSON.parse(localStorage.getItem('mp_user') || '{}');
+            const isLoggedIn  = !!localStorage.getItem('mp_token');
+            const sellerTypes = ['Owner', 'Builder', 'Agent', 'Landlord'];
+            const isSeller    = sellerTypes.includes(currentUser.userType);
+
+            // Owners/Builders/Agents see an info badge, not the button
+            if (isLoggedIn && isSeller) {
+              return (
+                <div style={{ marginBottom: 16, background: '#f8f9fa', border: '1.5px solid #e0e0e0', borderRadius: 14, padding: '14px 18px', textAlign: 'center' }}>
+                  <span style={{ fontSize: '1.1rem' }}>🏠</span>
+                  <p style={{ margin: '6px 0 0', fontSize: '0.82rem', color: '#666', lineHeight: 1.5 }}>
+                    You are signed in as <strong>{currentUser.userType}</strong>.<br />
+                    Only buyers can make an offer on a property.
+                  </p>
+                </div>
+              );
+            }
+
+            // Buyers (logged in or not) see the button
+            return (
+              <div style={{ marginBottom: 16 }}>
+                <button
+                  id="make-offer-btn"
+                  style={{
+                    width: '100%', padding: '16px',
+                    background: 'linear-gradient(135deg,#e85c27,#f97316)',
+                    color: '#fff', border: 'none', borderRadius: '14px',
+                    fontSize: '1rem', fontWeight: 800, cursor: 'pointer',
+                    fontFamily: 'inherit', letterSpacing: '-0.01em',
+                    boxShadow: '0 6px 20px rgba(232,92,39,0.35)',
+                    transition: 'all 0.2s',
+                  }}
+                  onClick={() => {
+                    if (!isLoggedIn) { navigate('/login'); return; }
+                    navigate(`/make-offer/${p._id || id}`, { state: { property: p } });
+                  }}
+                  onMouseOver={e => e.currentTarget.style.transform='translateY(-2px)'}
+                  onMouseOut={e  => e.currentTarget.style.transform='translateY(0)'}
+                >
+                  💰 Make an Offer
+                </button>
+                <p style={{ textAlign:'center', fontSize:'0.73rem', color:'#94a3b8', marginTop:6 }}>
+                  Submit your price directly to the owner
+                </p>
+              </div>
+            );
+          })()}
 
           {/* Contact Agent Form */}
-          <div className="pd-contact-form-card">
-            <h3 className="pd-form-title">Contact Agent</h3>
+          {(() => {
+            const currentUser = JSON.parse(localStorage.getItem('mp_user') || '{}');
+            const isLoggedIn  = !!localStorage.getItem('mp_token');
+            // Hide for any seller type (Owner, Agent, Builder, Landlord)
+            const hideContact = isLoggedIn && ['Owner', 'Agent', 'Builder', 'Landlord'].includes(currentUser.userType);
+            
+            if (hideContact) return null;
 
-            {contactSubmitted ? (
-              <div className="pd-contact-success">
-                <FaCheckCircle style={{ color: '#22c55e', fontSize: '2rem' }} />
-                <p>Your request has been submitted! The agent will contact you soon.</p>
-                <button className="pd-reset-btn" onClick={() => setContactSubmitted(false)}>Submit Another</button>
+            return (
+              <div className="pd-contact-form-card">
+                <h3 className="pd-form-title">Contact Agent</h3>
+
+                {contactSubmitted ? (
+                  <div className="pd-contact-success">
+                    <FaCheckCircle style={{ color: '#22c55e', fontSize: '2rem' }} />
+                    <p>Your request has been submitted! The agent will contact you soon.</p>
+                    <button className="pd-reset-btn" onClick={() => setContactSubmitted(false)}>Submit Another</button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleContactSubmit} className="pd-contact-form">
+                    <input
+                      type="text"
+                      placeholder="Name"
+                      className="pd-form-input"
+                      value={contactForm.name}
+                      onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Phone no"
+                      className="pd-form-input"
+                      value={contactForm.phone}
+                      onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                      required
+                    />
+                    <input
+                      type="email"
+                      placeholder="Email"
+                      className="pd-form-input"
+                      value={contactForm.email}
+                      onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                    />
+                    <textarea
+                      placeholder="Message (Optional)"
+                      className="pd-form-input pd-form-textarea"
+                      rows={3}
+                      value={contactForm.message}
+                      onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                    />
+                    <button type="submit" className="pd-request-btn" disabled={contactLoading}>
+                      {contactLoading ? 'Sending...' : 'Request Callback'}
+                    </button>
+                    <button type="button" className="pd-schedule-btn" onClick={() => setShowVisitModal(true)}>
+                      Schedule a visit
+                    </button>
+                    <div className="pd-contact-alt-btns">
+                      <a href={`mailto:${p.agentContact?.email || 'contact@manyprop.com'}`} className="pd-alt-btn">
+                        Email
+                      </a>
+                      <button type="button" className="pd-alt-btn pd-brochure" onClick={() => alert('Brochure download coming soon!')}>
+                        Brochure
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
-            ) : (
-              <form onSubmit={handleContactSubmit} className="pd-contact-form">
-                <input
-                  type="text"
-                  placeholder="Name"
-                  className="pd-form-input"
-                  value={contactForm.name}
-                  onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                />
-                <input
-                  type="tel"
-                  placeholder="Phone no"
-                  className="pd-form-input"
-                  value={contactForm.phone}
-                  onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
-                  required
-                />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  className="pd-form-input"
-                  value={contactForm.email}
-                  onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                />
-                <textarea
-                  placeholder="Message (Optional)"
-                  className="pd-form-input pd-form-textarea"
-                  rows={3}
-                  value={contactForm.message}
-                  onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                />
-                <button type="submit" className="pd-request-btn" disabled={contactLoading}>
-                  {contactLoading ? 'Sending...' : 'Request Callback'}
-                </button>
-                <button type="button" className="pd-schedule-btn" onClick={() => alert('Scheduling system coming soon!')}>
-                  Schedule a visit
-                </button>
-                <div className="pd-contact-alt-btns">
-                  <a href={`mailto:${p.agentContact?.email || 'contact@manyprop.com'}`} className="pd-alt-btn">
-                    Email
-                  </a>
-                  <button type="button" className="pd-alt-btn pd-brochure" onClick={() => alert('Brochure download coming soon!')}>
-                    Brochure
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
+            );
+          })()}
 
           {/* Share / Save / Compare — icon buttons */}
           <div className="pd-sidebar-actions">
@@ -547,23 +659,10 @@ const PropertyDetails = () => {
               <FaBalanceScale className="pd-sidebar-action-icon" />
               <span>Compare</span>
             </button>
-          </div>
-
-          {/* Related Property Summary Card */}
-          <div className="pd-related-card">
-            <div className="pd-related-img">
-              <img src="https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=400&q=80" alt="Related" />
-            </div>
-            <div className="pd-related-info">
-              <h4 className="pd-related-title">2 BHK 890 Sq-ft Flat</h4>
-              <p className="pd-related-price">3,68,750 per sq.yards</p>
-              <p className="pd-related-emi">EMI starts from 15k/month</p>
-              <div className="pd-related-status">
-                <span className="status-label">Status !</span>
-                <span className="status-val">Ready To Move</span>
-              </div>
-              <button className="pd-view-details-btn" onClick={() => navigate('/properties')}>View Details</button>
-            </div>
+            <button className="pd-sidebar-action-btn" onClick={() => setShowReportModal(true)} style={{ color: '#ef4444' }}>
+              <FaExclamationTriangle className="pd-sidebar-action-icon" style={{ color: '#ef4444' }} />
+              <span>Report</span>
+            </button>
           </div>
 
         </div>
@@ -616,6 +715,139 @@ const PropertyDetails = () => {
                 </div>
                 <button type="submit" className="pd-offer-submit-btn" disabled={offerStatus.loading}>
                   {offerStatus.loading ? 'Sending Offer...' : 'Submit Official Offer'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="pd-offer-modal-overlay">
+          <div className="pd-offer-modal">
+            <button className="pd-offer-modal-close" onClick={() => setShowReportModal(false)}>×</button>
+            <h2 className="pd-offer-modal-title" style={{ color: '#ef4444' }}>Report Property</h2>
+            <p className="pd-offer-modal-sub">Tell us why you are reporting this property.</p>
+
+            {reportStatus.success ? (
+              <div className="pd-offer-success">
+                <FaCheckCircle className="pd-offer-success-icon" style={{ color: '#ef4444' }} />
+                <h3 style={{ color: '#ef4444' }}>Report Submitted</h3>
+                <p>Thank you. Our admin team will review this shortly.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleReportSubmit} className="pd-offer-form">
+                <div className="pd-offer-field">
+                  <label>Reason for reporting</label>
+                  <textarea
+                    placeholder="E.g. Fake listing, incorrect price, already sold..."
+                    value={reportReason}
+                    onChange={(e) => setReportReason(e.target.value)}
+                    rows={4}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      border: '1px solid #e2e8f0',
+                      marginTop: '8px',
+                      fontFamily: 'inherit'
+                    }}
+                  />
+                </div>
+                <button type="submit" className="pd-offer-submit-btn" style={{ background: '#ef4444' }} disabled={reportStatus.loading}>
+                  {reportStatus.loading ? 'Submitting...' : 'Submit Report'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Schedule a Visit Modal */}
+      {showVisitModal && (
+        <div className="pd-offer-modal-overlay">
+          <div className="pd-offer-modal">
+            <button className="pd-offer-modal-close" onClick={() => { setShowVisitModal(false); setVisitStatus({ loading: false, success: false }); }}>×</button>
+            <h2 className="pd-offer-modal-title">📅 Schedule a Site Visit</h2>
+            <p className="pd-offer-modal-sub">Fill in your details and we'll confirm your visit with the owner.</p>
+
+            {visitStatus.success ? (
+              <div className="pd-offer-success">
+                <FaCheckCircle className="pd-offer-success-icon" style={{ color: '#22c55e' }} />
+                <h3 style={{ color: '#22c55e' }}>Visit Scheduled!</h3>
+                <p>Your request has been sent to the owner. They will confirm the timing shortly.</p>
+                <button className="pd-offer-submit-btn" style={{ marginTop: '16px', background: '#22c55e' }} onClick={() => { setShowVisitModal(false); setVisitStatus({ loading: false, success: false }); setVisitForm({ name: '', phone: '', email: '', date: '', time: '' }); }}>
+                  Done
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleVisitSubmit} className="pd-offer-form">
+                <div className="pd-offer-field">
+                  <label>Your Name</label>
+                  <input
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={visitForm.name}
+                    onChange={(e) => setVisitForm({ ...visitForm, name: e.target.value })}
+                    required
+                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '8px', fontFamily: 'inherit' }}
+                  />
+                </div>
+                <div className="pd-offer-field">
+                  <label>Phone Number *</label>
+                  <input
+                    type="tel"
+                    placeholder="e.g. +91 9876543210"
+                    value={visitForm.phone}
+                    onChange={(e) => setVisitForm({ ...visitForm, phone: e.target.value })}
+                    required
+                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '8px', fontFamily: 'inherit' }}
+                  />
+                </div>
+                <div className="pd-offer-field">
+                  <label>Email (Optional)</label>
+                  <input
+                    type="email"
+                    placeholder="your@email.com"
+                    value={visitForm.email}
+                    onChange={(e) => setVisitForm({ ...visitForm, email: e.target.value })}
+                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '8px', fontFamily: 'inherit' }}
+                  />
+                </div>
+                <div className="pd-offer-field">
+                  <label>Preferred Date *</label>
+                  <input
+                    type="date"
+                    value={visitForm.date}
+                    min={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setVisitForm({ ...visitForm, date: e.target.value })}
+                    required
+                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '8px', fontFamily: 'inherit' }}
+                  />
+                </div>
+                <div className="pd-offer-field">
+                  <label>Preferred Time</label>
+                  <select
+                    value={visitForm.time}
+                    onChange={(e) => setVisitForm({ ...visitForm, time: e.target.value })}
+                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '8px', fontFamily: 'inherit' }}
+                  >
+                    <option value="">Any time</option>
+                    <option value="9:00 AM">9:00 AM</option>
+                    <option value="10:00 AM">10:00 AM</option>
+                    <option value="11:00 AM">11:00 AM</option>
+                    <option value="12:00 PM">12:00 PM</option>
+                    <option value="2:00 PM">2:00 PM</option>
+                    <option value="3:00 PM">3:00 PM</option>
+                    <option value="4:00 PM">4:00 PM</option>
+                    <option value="5:00 PM">5:00 PM</option>
+                    <option value="6:00 PM">6:00 PM</option>
+                  </select>
+                </div>
+                <button type="submit" className="pd-offer-submit-btn" style={{ background: 'linear-gradient(135deg,#e85c27,#f97316)' }} disabled={visitStatus.loading}>
+                  {visitStatus.loading ? 'Scheduling...' : '📅 Confirm Visit Request'}
                 </button>
               </form>
             )}

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaCalculator, FaRupeeSign, FaBalanceScale, FaChartLine, FaTimes } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { FaCalculator, FaRupeeSign, FaBalanceScale, FaChartLine, FaTimes, FaRulerCombined } from 'react-icons/fa';
 import './ToolsSection.css';
 
 const tools = [
@@ -23,6 +23,12 @@ const tools = [
         description: 'Analyze properties side-by-side to make confident and well-informed real estate decisions.',
     },
     {
+        id: 'area',
+        icon: <FaRulerCombined />,
+        title: 'Area Converter',
+        description: 'Easily convert property area between sq ft, sq m, acres, hectares, and more.',
+    },
+    {
         id: 'trends',
         icon: <FaChartLine />,
         title: 'Price Trends',
@@ -32,12 +38,39 @@ const tools = [
 
 const ToolsSection = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [activeTool, setActiveTool] = useState(null);
+
+    useEffect(() => {
+        if (location.hash && location.hash.startsWith('#tool-')) {
+            const toolId = location.hash.replace('#tool-', '');
+            if (toolId === 'compare') {
+                navigate('/compare');
+            } else {
+                setActiveTool(toolId);
+                setTimeout(() => {
+                    document.getElementById('tools-section')?.scrollIntoView({ behavior: 'smooth' });
+                }, 300);
+            }
+        }
+    }, [location, navigate]);
+
+    const closeTool = () => {
+        setActiveTool(null);
+        if (location.hash.startsWith('#tool-')) {
+            navigate(location.pathname, { replace: true });
+        }
+    };
 
     // EMI State
     const [loanAmount, setLoanAmount] = useState(5000000);
     const [interestRate, setInterestRate] = useState(8.5);
     const [loanTenure, setLoanTenure] = useState(20);
+
+    // Area State
+    const [areaValue, setAreaValue] = useState(1000);
+    const [fromUnit, setFromUnit] = useState('sqft');
+    const [toUnit, setToUnit] = useState('sqm');
 
     const calculateEMI = () => {
         const p = loanAmount;
@@ -78,9 +111,9 @@ const ToolsSection = () => {
 
             {/* Modals */}
             {activeTool && (
-                <div className="tool-modal-overlay" onClick={() => setActiveTool(null)}>
+                <div className="tool-modal-overlay" onClick={closeTool}>
                     <div className="tool-modal-content" onClick={e => e.stopPropagation()}>
-                        <button className="tool-modal-close" onClick={() => setActiveTool(null)}><FaTimes /></button>
+                        <button className="tool-modal-close" onClick={closeTool}><FaTimes /></button>
 
                         {activeTool === 'emi' && (
                             <div className="emi-calculator">
@@ -136,6 +169,65 @@ const ToolsSection = () => {
                                     </div>
                                 </div>
                                 <button className="tool-apply-btn">Apply Now</button>
+                            </div>
+                        )}
+
+                        {activeTool === 'area' && (
+                            <div className="area-converter">
+                                <h3>Area Converter</h3>
+                                <p className="tool-modal-sub">Convert property sizes instantly.</p>
+
+                                <div className="emi-input-group" style={{ marginTop: '20px' }}>
+                                    <label>Value to convert</label>
+                                    <input type="number" value={areaValue} onChange={e => setAreaValue(Number(e.target.value))} style={{ marginBottom: '15px' }} />
+                                </div>
+                                <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '5px', color: '#666' }}>From Unit</label>
+                                        <select value={fromUnit} onChange={e => setFromUnit(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}>
+                                            <option value="sqft">Sq. Ft (Square Feet)</option>
+                                            <option value="sqm">Sq. M (Square Meters)</option>
+                                            <option value="sqyd">Sq. Yd (Square Yards)</option>
+                                            <option value="acre">Acres</option>
+                                            <option value="hectare">Hectares</option>
+                                            <option value="bigha">Bigha</option>
+                                            <option value="gaj">Gaj</option>
+                                        </select>
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '5px', color: '#666' }}>To Unit</label>
+                                        <select value={toUnit} onChange={e => setToUnit(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}>
+                                            <option value="sqft">Sq. Ft (Square Feet)</option>
+                                            <option value="sqm">Sq. M (Square Meters)</option>
+                                            <option value="sqyd">Sq. Yd (Square Yards)</option>
+                                            <option value="acre">Acres</option>
+                                            <option value="hectare">Hectares</option>
+                                            <option value="bigha">Bigha</option>
+                                            <option value="gaj">Gaj</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="emi-result" style={{ background: '#f8f9fa', color: '#333' }}>
+                                    <div>Converted Area</div>
+                                    <strong style={{ color: '#e85c27' }}>
+                                        {(() => {
+                                            // Conversion to base (sqft)
+                                            const toSqft = {
+                                                sqft: 1,
+                                                sqm: 10.7639,
+                                                sqyd: 9,
+                                                acre: 43560,
+                                                hectare: 107639,
+                                                bigha: 27000,
+                                                gaj: 9
+                                            };
+                                            const baseSqft = areaValue * toSqft[fromUnit];
+                                            const result = baseSqft / toSqft[toUnit];
+                                            return result.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + toUnit;
+                                        })()}
+                                    </strong>
+                                </div>
                             </div>
                         )}
 

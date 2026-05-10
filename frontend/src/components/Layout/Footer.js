@@ -202,10 +202,10 @@ const Footer = () => {
             <div className="footer-section">
               <h4 className="footer-section-title">Useful tools</h4>
               <ul className="footer-links">
-                <li><a href="/#tools-section">Emi Calculator</a></li>
-                <li><a href="/#tools-section">Area Converter</a></li>
-                <li><Link to="/compare">Compare property</Link></li>
-                <li><Link to="#">Others</Link></li>
+                <li><Link to="/home#tool-emi">EMI Calculator</Link></li>
+                <li><Link to="/home#tool-area">Area Converter</Link></li>
+                <li><Link to="/compare">Compare Property</Link></li>
+                <li><Link to="/home#tool-loans">Home Loans</Link></li>
               </ul>
             </div>
           </div>
