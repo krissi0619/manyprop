@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import SEO from '../components/Common/SEO';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -27,6 +28,10 @@ const Register = () => {
 
   return (
     <div style={{ paddingTop: '100px', paddingBottom: '60px' }}>
+      <SEO 
+        title="Register Your Account | ManyProp"
+        description="Sign up for a ManyProp account today. Gain access to verified properties directly from owners, real-time agent leads, and zero brokerage listings."
+      />
       <div className="container">
         <div style={{ maxWidth: '400px', margin: '0 auto' }}>
           <h1>Register</h1>

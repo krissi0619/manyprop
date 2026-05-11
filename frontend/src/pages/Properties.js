@@ -12,6 +12,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents, Circle, useMap } 
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { API_PROPERTIES } from '../api/config';
+import SEO from '../components/Common/SEO';
 import './Properties.css';
 
 /* Fix leaflet marker icon */
@@ -619,6 +620,11 @@ const Properties = () => {
 
   return (
     <div className="properties-page">
+      <SEO 
+        title={cityInput ? `Verified Properties in ${cityInput} | Flats, Villas, Apartments` : "Search Verified Properties, Flats, Villas for Buy & Rent"}
+        description={cityInput ? `Find the best verified properties, flats, apartments, and villas for sale or rent in ${cityInput} with zero brokerage. Connect directly with owners or agents on ManyProp.` : "Search thousands of direct owner listings including flats, apartments, villas and commercial properties with zero brokerage on ManyProp."}
+        keywords={cityInput ? `properties in ${cityInput}, flats in ${cityInput}, apartments for sale ${cityInput}, direct owner homes ${cityInput}, zero brokerage` : "real estate listing, buy flats, rent apartments, villas for sale, no brokerage properties"}
+      />
       {/* NEW TOP SEARCH PILL BAR */}
       <div className="design-top-search-bar">
         <div className="design-search-pill">

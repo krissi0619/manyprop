@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useGoogleLogin } from '@react-oauth/google';
+import SEO from '../components/Common/SEO';
 import './Login.css';
 import { API_AUTH } from '../api/config';
 
@@ -598,6 +599,10 @@ const Login = () => {
   if (step === STEPS.LOGIN) {
     return (
       <div className="login-page">
+        <SEO 
+          title="Login & Access Your Account | ManyProp"
+          description="Login to ManyProp to browse, list, and compare properties. Zero brokerage direct owner real estate platform."
+        />
         <span className="step-label-overlay">{STEP_LABELS[STEPS.LOGIN]}</span>
 
         <div className="login-card" key="step-login">

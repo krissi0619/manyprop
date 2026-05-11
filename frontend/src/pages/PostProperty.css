@@ -1203,3 +1203,90 @@
 .map-container-wrap {
     height: 280px !important;
 }
+
+/* ================================================================
+   POST PROPERTY – RESPONSIVE STYLES
+   ================================================================ */
+
+@media (max-width: 768px) {
+    /* Header */
+    .pp-header { padding: 10px 16px; }
+    .header-item:not(:first-child):not(.pp-header-right > *) { display: none; }
+
+    /* Progress / stepper */
+    .pp-progress-section { padding: 20px 16px 0; }
+    .pp-stepper { padding: 0 2%; margin: 24px 0; overflow-x: auto; }
+    .step-label { font-size: 9px; letter-spacing: 0.2px; text-align: center; max-width: 54px; }
+    .step-circle { width: 30px; height: 30px; font-size: 13px; }
+    .stepper-line-bg, .stepper-line { top: 15px; }
+
+    /* Content box */
+    .pp-content-box { padding: 16px 16px; }
+
+    /* Step headings */
+    .step-heading-main { font-size: 20px; margin-bottom: 18px; }
+
+    /* Intent cards (Step 1) — 1 column on xs, 3 col on sm */
+    .intent-grid { grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+    .intent-card { padding: 18px 10px; }
+    .intent-card .intent-title { font-size: 16px; }
+    .intent-card .intent-desc { font-size: 11px; }
+
+    /* Property type grid — 2 col */
+    .property-type-grid-new { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .prop-type-btn { padding: 14px 8px; font-size: 12px; }
+
+    /* Form rows — stack label above chips */
+    .form-row-new { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .row-label { min-width: unset; font-size: 15px; }
+
+    /* Input grid — single column */
+    .input-grid-2col { grid-template-columns: 1fr; gap: 14px 0; }
+    .input-item-new { flex-direction: column; align-items: flex-start; gap: 6px; }
+    .input-item-new label { min-width: unset; font-size: 15px; }
+    .input-item-new input { width: 100%; box-sizing: border-box; }
+
+    /* Amenities — 2 col */
+    .amenities-grid-new { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .amenity-card-new { padding: 12px 14px; }
+    .amenity-label-new { font-size: 12px; }
+
+    /* Media upload — single column */
+    .media-split-layout { grid-template-columns: 1fr; gap: 20px; }
+
+    /* Visibility grid — single column */
+    .visibility-grid { grid-template-columns: 1fr; gap: 10px; }
+
+    /* Map nearby places — single column */
+    .places-grid-2col-interactive { grid-template-columns: 1fr; }
+
+    /* Preview card — stack vertically */
+    .property-preview-card { flex-direction: column; }
+    .preview-card-img { width: 100%; min-height: 180px; }
+    .preview-specs-strip { flex-wrap: wrap; gap: 8px; }
+
+    /* Nav buttons */
+    .pp-nav-buttons-new { padding: 0 16px; flex-direction: column-reverse; gap: 10px; margin-top: 32px; }
+    .btn-back-new, .btn-next-new { width: 100%; justify-content: center; text-align: center; }
+
+    /* Success card */
+    .pp-success-card { padding: 40px 20px; margin: 0 16px; }
+    .pp-success-card h2 { font-size: 22px; }
+
+    /* Publish step secondary btns */
+    .secondary-publish-btns { flex-direction: column; }
+}
+
+@media (max-width: 480px) {
+    /* Intent cards — single column on very small screens */
+    .intent-grid { grid-template-columns: 1fr; gap: 10px; }
+
+    /* Property type — single column */
+    .property-type-grid-new { grid-template-columns: 1fr 1fr; }
+
+    /* Amenities — single column */
+    .amenities-grid-new { grid-template-columns: 1fr; }
+
+    .step-heading-main { font-size: 18px; }
+    .pp-content-box { padding: 12px; }
+}

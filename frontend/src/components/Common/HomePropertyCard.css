@@ -9,8 +9,8 @@
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   cursor: pointer;
   font-family: 'Inter', sans-serif;
-  min-width: 420px;
-  max-width: 420px;
+  min-width: 340px;
+  max-width: 340px;
   flex-shrink: 0;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06);
 }
@@ -223,4 +223,34 @@
 
 .project-view-btn:hover {
   background: #111;
+}
+
+@media (max-width: 768px) {
+  .project-card.home-property-card-override {
+    min-width: 280px;
+    max-width: 280px;
+  }
+  .project-card.home-property-card-override .project-image-container {
+    height: 180px;
+  }
+  .price-main { font-size: 1.2rem; }
+  .bhk-text { font-size: 0.95rem; }
+}
+
+@media (max-width: 480px) {
+  .project-card.home-property-card-override {
+    min-width: 240px;
+    max-width: 240px;
+  }
+  .project-card.home-property-card-override .project-image-container {
+    height: 150px;
+  }
+  .project-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .project-compare-btn, .project-view-btn {
+    padding: 10px 0;
+    font-size: 0.85rem;
+  }
 }

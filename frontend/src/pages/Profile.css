@@ -135,6 +135,7 @@
     border: 1px solid #ebebeb;
     padding: 32px;
     min-height: 500px;
+    min-width: 0; /* Fix flex blowout issue */
 }
 
 .tab-pane h2 {
@@ -346,6 +347,7 @@ input:checked + .slider:before { transform: translateX(24px); }
 @media (max-width: 768px) {
     .profile-container { flex-direction: column; }
     .profile-sidebar { width: 100%; }
+    .profile-content { padding: 16px; min-width: 100%; }
 }
 
 /* ══════════════════════════════════════════════

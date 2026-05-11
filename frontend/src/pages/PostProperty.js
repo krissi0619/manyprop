@@ -13,6 +13,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-lea
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { API_PROPERTIES } from '../api/config';
+import SEO from '../components/Common/SEO';
 import './PostProperty.css';
 
 // Fix for default marker icon in Leaflet
@@ -412,6 +413,11 @@ const PostProperty = () => {
 
     return (
         <div className="pp-layout">
+            <SEO 
+                title="Post Property Free | Sell or Rent Real Estate Online | ManyProp"
+                description="List your flat, house, villa, plot, apartment or commercial space on ManyProp for FREE. Get direct buyer calls with zero brokerage."
+                keywords="post property free, sell flat online, rent house direct owners, list property free, real estate advertising India"
+            />
             <div className="pp-header">
                 <div className="pp-header-left">
                     <div className="header-item">

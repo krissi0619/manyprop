@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import propertyHero from '../assets/property_hero.png';
+import SEO from '../components/Common/SEO';
 import './Landing.css';
 
 const Landing = () => {
@@ -27,8 +28,30 @@ const Landing = () => {
     navigate('/home');
   };
 
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "ManyProp",
+    "url": "https://manyprop.onrender.com",
+    "description": "India's most trusted property platform with 100% owner listings and zero brokerage.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://manyprop.onrender.com/properties?search={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  };
+
   return (
     <div className={`landing-page${loaded ? ' landing-loaded' : ''}`}>
+      <SEO 
+        title="India's Most Trusted Property Platform | No Brokerage"
+        description="ManyProp is India's premier zero brokerage real estate platform. Browse 100% verified properties directly from owners. Find your dream home, apartment, flat, or villa today."
+        keywords="ManyProp, no brokerage real estate, buy verified houses, rent zero brokerage flats, direct owners real estate, apartment Baben, flat Pune"
+        schema={websiteSchema}
+      />
       {/* Ambient orbs */}
       <div className="landing-orb landing-orb-1" />
       <div className="landing-orb landing-orb-2" />

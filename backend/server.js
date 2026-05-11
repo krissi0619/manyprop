@@ -84,6 +84,7 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/enquiries', require('./routes/enquiries'));
 app.use('/api/analysis', require('./routes/analysis'));
 app.use('/api/agent', require('./routes/agent'));
+app.use('/', require('./routes/sitemap'));
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/manyprop', {

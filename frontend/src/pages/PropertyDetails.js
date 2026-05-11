@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL, API_PROPERTIES, API_NEWS, API_CONTACTS, API_OFFERS } from '../api/config';
+import SEO from '../components/Common/SEO';
 import './PropertyDetails.css';
 
 // Fallback mock data so the page always renders
@@ -266,8 +267,54 @@ const PropertyDetails = () => {
   const thumbImages = allImages.slice(0, 5);
   const videoUrl = p.video ? getMediaUrl(p.video) : '';
 
+  // Dynamic RealEstateListing Schema
+  const dynamicSchema = {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    "name": p.title,
+    "description": p.description,
+    "url": typeof window !== 'undefined' ? window.location.href : '',
+    "image": allImages[0] || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80",
+    "datePosted": p.createdAt || new Date().toISOString(),
+    "offers": {
+      "@type": "Offer",
+      "price": p.price,
+      "priceCurrency": "INR"
+    },
+    "about": {
+      "@type": p.propertyType === 'flat' || p.propertyType === 'apartment' ? "Apartment" : "SingleFamilyResidence",
+      "name": p.title,
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": p.address?.locality || "",
+        "addressRegion": p.address?.city || "",
+        "addressCountry": "IN"
+      },
+      "numberOfRooms": p.details?.bedrooms || 0,
+      "numberOfBathroomsTotal": p.details?.bathrooms || 0,
+      "floorSize": {
+        "@type": "QuantitativeValue",
+        "value": p.details?.area || 0,
+        "unitCode": "FTK"
+      }
+    }
+  };
+
+  const bedLabel = p.details?.bedrooms ? `${p.details.bedrooms} BHK ` : '';
+  const typeLabel = p.propertyType ? p.propertyType.charAt(0).toUpperCase() + p.propertyType.slice(1).replace('_', ' ') : 'Property';
+  const priceTypeLabel = p.priceType === 'rent' ? 'Rent' : 'Sale';
+  const localityLabel = p.address?.locality ? `${p.address.locality}, ` : '';
+  const cityLabel = p.address?.city || '';
+
   return (
     <div className="pd-page">
+      <SEO 
+        title={`${p.title} | ${bedLabel}${typeLabel} for ${priceTypeLabel} in ${localityLabel}${cityLabel}`}
+        description={`${p.description ? p.description.substring(0, 150) : 'Property details for ' + p.title}. Locate verified properties, get builder contacts, direct owner listings on ManyProp.`}
+        image={allImages[0]}
+        schema={dynamicSchema}
+        keywords={`${p.title}, buy flat ${cityLabel}, rent apartment ${localityLabel}${cityLabel}, zero brokerage property, ${typeLabel} in ${cityLabel}`}
+      />
       {/* Breadcrumb */}
       <div className="pd-breadcrumb-bar">
         <div className="pd-container">

@@ -77,7 +77,7 @@ const AgentDashboard = ({ setActiveTab }) => {
             {aiAlert && (
                 <div className="ad-ai-alert">
                     <div className="ad-ai-icon">✨</div>
-                    <p><strong>AI deal alert:</strong> {aiAlert} <span className="ad-ai-link" onClick={() => setActiveTab('enquiries')}>Contact now ↗</span></p>
+                    <p><strong>AI deal alert:</strong> {aiAlert} <span className="ad-ai-link" onClick={() => setActiveTab('hot-leads')}>Contact now ↗</span></p>
                 </div>
             )}
 
@@ -110,10 +110,10 @@ const AgentDashboard = ({ setActiveTab }) => {
                 <button className="ad-action-btn" onClick={() => setActiveTab('post-property')}>
                     <FaPlus className="ad-action-icon" /> Add listing
                 </button>
-                <button className="ad-action-btn" onClick={() => setActiveTab('enquiries')}>
+                <button className="ad-action-btn" onClick={() => setActiveTab('hot-leads')}>
                     <FaFire className="ad-action-icon hot" /> Hot leads
                 </button>
-                <button className="ad-action-btn" onClick={() => setActiveTab('offers-received')}>
+                <button className="ad-action-btn" onClick={() => setActiveTab('pipeline')}>
                     <FaChartPie className="ad-action-icon pipeline" /> Pipeline
                 </button>
                 <button className="ad-action-btn" onClick={() => setActiveTab('enquiries')}>
@@ -191,7 +191,7 @@ const AgentDashboard = ({ setActiveTab }) => {
                 <div className="ad-panel leads-panel">
                     <div className="ad-panel-head">
                         <h3><FaFire color="#e85d04" /> Hot leads</h3>
-                        <span className="ad-link" onClick={() => setActiveTab('enquiries')}>All leads ↗</span>
+                        <span className="ad-link" onClick={() => setActiveTab('hot-leads')}>All leads ↗</span>
                     </div>
                     <div className="ad-list">
                         {hotLeads.length === 0 ? <p className="ad-empty">No active leads found.</p> : hotLeads.map(lead => (
@@ -214,7 +214,7 @@ const AgentDashboard = ({ setActiveTab }) => {
                 <div className="ad-panel pipeline-panel">
                     <div className="ad-panel-head">
                         <h3><FaChartPie /> Deal pipeline</h3>
-                        <span className="ad-link" onClick={() => setActiveTab('offers-received')}>Details ↗</span>
+                        <span className="ad-link" onClick={() => setActiveTab('pipeline')}>Details ↗</span>
                     </div>
                     <div className="ad-pipe-breakdown">
                         <p className="ad-pipe-label">STAGE BREAKDOWN</p>

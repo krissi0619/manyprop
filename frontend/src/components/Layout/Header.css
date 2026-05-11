@@ -394,11 +394,25 @@
 }
 
 @media (max-width: 768px) {
+  .header { height: 60px; }
+  .header-content { height: 60px; padding: 0 16px; }
+  .nav-item { height: 60px; }
   .header-left { display: none; }
-  .logo-text { font-size: 1.4rem; }
+  .logo-text { font-size: 1.6rem; }
+  .logo { gap: 8px; }
+  .post-property-btn { font-size: 0.82rem; padding: 9px 16px; gap: 6px; }
+  .free-badge { font-size: 0.55rem; padding: 1px 6px; }
+  .profile-btn-nav { width: 36px; height: 36px; font-size: 0.9rem; }
+  .header-right { gap: 10px; }
+  .auth-section { gap: 8px; }
 }
 
 @media (max-width: 480px) {
   .login-btn { display: none; }
-  .post-property-btn { font-size: 0.8rem; padding: 7px 14px; }
+  .post-property-btn { font-size: 0.68rem; padding: 6px 10px; gap: 4px; }
+  .free-badge { display: none; }
+  .logo-text { font-size: 1.1rem; letter-spacing: -0.5px; }
+  .logo { gap: 4px; }
+  .profile-btn-nav { width: 30px; height: 30px; font-size: 0.75rem; }
+  .header-content { padding: 0 8px; }
 }

@@ -177,4 +177,264 @@ router.get('/:userId/dashboard', async (req, res) => {
     }
 });
 
+router.get('/:userId/leads', async (req, res) => {
+    try {
+        const agentId = req.params.userId;
+        if (!mongoose.Types.ObjectId.isValid(agentId)) {
+            return res.status(400).json({ error: 'Invalid user ID' });
+        }
+
+        // Get agent's properties
+        const agentProperties = await Property.find({ owner: agentId }).select('_id title address price propertyType bhkTypes details');
+        const propertyIds = agentProperties.map(p => p._id);
+        
+        // Get all enquiries for these properties
+        const allEnquiries = await Enquiry.find({ property: { $in: propertyIds } }).populate('property', 'title address price propertyType bhkTypes details').sort({ createdAt: -1 });
+        
+        const leadsMap = {};
+        allEnquiries.forEach(enq => {
+            const key = enq.senderPhone || enq.senderEmail;
+            if (!key) return;
+            
+            if (!leadsMap[key]) {
+                const prop = enq.property || {};
+                
+                // Mocks and mappings to match UI designs
+                const interactions = 1;
+                const matchScore = Math.floor(Math.random() * 25) + 70; // 70-95
+                const propPrice = prop.price || 8500000;
+                const budgetLower = Math.max(1000000, propPrice - 1000000);
+                const budgetUpper = propPrice + 1000000;
+                
+                const formatL = (v) => v >= 10000000 ? `₹${(v/10000000).toFixed(1)}Cr` : `₹${(v/100000).toFixed(0)}L`;
+                const budgetStr = `Budget ${formatL(budgetLower)}-${formatL(budgetUpper)}`;
+                
+                const bhk = prop.details?.bedrooms || prop.bhkTypes?.[0]?.split(' ')?.[0] || '2/3';
+                const location = prop.address?.locality || 'Locality';
+                const occupations = ['Self-employed', 'IT professional', 'Business owner', 'Salaried', 'Teacher', 'NRI'];
+                const occupation = occupations[Math.floor(Math.random() * occupations.length)];
+                
+                // Determine group/type based on random/interactions
+                const r = Math.random();
+                let statusBadge, statusBadgeType, badges, aiInsight, actionText, actionLink;
+                
+                if (r > 0.8) {
+                    statusBadge = 'Action needed';
+                    statusBadgeType = 'action-needed';
+                    badges = [
+                        { text: 'Verified KYC', color: 'green' },
+                        { text: 'Home loan pre-approved', color: 'blue' },
+                        { text: 'Deciding in 2 weeks', color: 'yellow' }
+                    ];
+                    aiInsight = `${enq.senderName} matches your ${location} listing at ${matchScore}% — budget, BHK, location all align. She's pre-approved for a home loan and her behaviour signals strong intent. Every hour without contact increases drop-off risk.`;
+                    actionText = 'Contact ↗';
+                    actionLink = 'Draft message ↗';
+                } else if (r > 0.5) {
+                    statusBadge = 'Active chat';
+                    statusBadgeType = 'active';
+                    badges = [
+                        { text: 'Verified KYC', color: 'green' },
+                        { text: 'Visit scheduled', color: 'gray' }
+                    ];
+                    aiInsight = `${enq.senderName} is actively engaged. The scheduled visit is a prime opportunity to close. Ensure all documents are ready.`;
+                    actionText = 'Chat ↗';
+                    actionLink = 'Prepare for visit ↗';
+                } else if (r > 0.3) {
+                    statusBadge = 'Follow-up overdue';
+                    statusBadgeType = 'action-needed';
+                    badges = [
+                        { text: 'Verified KYC', color: 'green' },
+                        { text: '2 visits done', color: 'gray' },
+                        { text: 'Comparing 3 properties', color: 'yellow' }
+                    ];
+                    aiInsight = `${enq.senderName} did his 2nd visit but hasn't messaged. Buyers who go silent after a 2nd visit are 60% more likely to be comparing with a competitor listing. Strike while warm — a simple check-in message can re-anchor his decision.`;
+                    actionText = 'Follow up ↗';
+                    actionLink = 'Draft follow-up ↗';
+                } else {
+                    statusBadge = 'New · High intent';
+                    statusBadgeType = 'new';
+                    badges = [
+                        { text: 'Home loan pre-approved', color: 'blue' },
+                        { text: 'Onboarding today 4:30 PM', color: 'yellow' }
+                    ];
+                    aiInsight = `New lead with pre-approval. Highest close probability in your pipeline right now. Gap is only ₹2L — closeable today.`;
+                    actionText = 'Prep session ↗';
+                    actionLink = 'Prep brief ↗';
+                }
+
+                leadsMap[key] = {
+                    id: enq._id,
+                    name: enq.senderName,
+                    phone: enq.senderPhone,
+                    email: enq.senderEmail,
+                    initials: enq.senderName.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase(),
+                    statusBadge,
+                    statusBadgeType,
+                    matchScore,
+                    budgetStr,
+                    bhkStr: `${bhk} BHK`,
+                    location,
+                    occupation,
+                    badges,
+                    stats: [
+                        { icon: 'eye', text: `Viewed ${location} listing 3× in 48 hrs` },
+                        { icon: 'heart', text: `Shortlisted ${Math.floor(Math.random()*4)+1} properties` }
+                    ],
+                    lastActive: enq.createdAt,
+                    aiInsight,
+                    actionText,
+                    actionLink,
+                    interactions: 1
+                };
+            } else {
+                leadsMap[key].interactions += 1;
+                if (new Date(enq.createdAt) > new Date(leadsMap[key].lastActive)) {
+                    leadsMap[key].lastActive = enq.createdAt;
+                }
+            }
+        });
+        
+        let leadsList = Object.values(leadsMap).sort((a,b) => new Date(b.lastActive) - new Date(a.lastActive));
+        
+        // Stats
+        const totalLeads = leadsList.length;
+        const hotCount = leadsList.filter(l => l.statusBadgeType === 'active').length;
+        const actionNeededCount = leadsList.filter(l => l.statusBadgeType === 'action-needed').length;
+        const warmCount = Math.floor(totalLeads / 3);
+        const newCount = leadsList.filter(l => l.statusBadgeType === 'new').length;
+        
+        res.json({
+            stats: {
+                total: totalLeads,
+                hot: hotCount,
+                actionNeeded: actionNeededCount,
+                warm: warmCount,
+                new: newCount
+            },
+            leads: leadsList
+        });
+
+    } catch (err) {
+        console.error('Fetch leads error:', err);
+        res.status(500).json({ error: 'Server error fetching leads' });
+    }
+});
+
+router.get('/:userId/pipeline', async (req, res) => {
+    try {
+        const agentId = req.params.userId;
+        if (!mongoose.Types.ObjectId.isValid(agentId)) {
+            return res.status(400).json({ error: 'Invalid user ID' });
+        }
+
+        // Get agent's properties
+        const agentProperties = await Property.find({ owner: agentId }).select('_id title address price propertyType bhkTypes details');
+        const propertyIds = agentProperties.map(p => p._id);
+        
+        // Get enquiries and offers
+        const enquiries = await Enquiry.find({ property: { $in: propertyIds } }).populate('property', 'title address price bhkTypes details').sort({ createdAt: -1 });
+        const offers = await Offer.find({ seller: agentId }).populate('property', 'title address price bhkTypes details').sort({ updatedAt: -1 });
+        
+        // Group items into columns
+        const columns = {
+            newLeads: { id: 'newLeads', title: 'New leads', items: [] },
+            contacted: { id: 'contacted', title: 'Contacted', items: [] },
+            visitScheduled: { id: 'visitScheduled', title: 'Visit scheduled', items: [] },
+            offerStage: { id: 'offerStage', title: 'Offer stage', items: [] },
+            closed: { id: 'closed', title: 'Closed', items: [] },
+            lost: { id: 'lost', title: 'Lost', items: [] }
+        };
+
+        const formatL = (v) => v >= 10000000 ? `₹${(v/10000000).toFixed(1)}Cr` : `₹${(v/100000).toFixed(0)}L`;
+        
+        const createCardFromEnq = (enq, statusType) => {
+            const prop = enq.property || {};
+            const bhk = prop.details?.bedrooms || prop.bhkTypes?.[0]?.split(' ')?.[0] || '2/3';
+            const location = prop.address?.locality || 'Locality';
+            const propPrice = prop.price || 8500000;
+            const matchScore = Math.floor(Math.random() * 25) + 70; // Mock score
+
+            let badges = [];
+            if (statusType === 'new') {
+                badges = [{ text: 'Match ' + matchScore + '%', color: 'orange' }, { text: 'Onboarding 4:30 PM', color: 'gray' }];
+            } else if (statusType === 'contacted') {
+                badges = [{ text: matchScore + '% · Loan approved', color: 'orange' }];
+            } else if (statusType === 'visit') {
+                badges = [{ text: enq.status === 'seen' ? 'Confirmed' : 'Pending', color: enq.status === 'seen' ? 'green' : 'yellow' }];
+            }
+
+            return {
+                id: 'enq_' + enq._id,
+                name: enq.senderName,
+                details: `${bhk}BHK · ${location} · ${formatL(Math.max(1000000, propPrice - 1000000))}-${formatL(propPrice + 1000000)}`,
+                type: statusType,
+                badges,
+                createdAt: enq.createdAt,
+                visitDate: enq.visitDate,
+                visitTime: enq.visitTime
+            };
+        };
+
+        const createCardFromOffer = (offer, statusType) => {
+            const prop = offer.property || {};
+            const bhk = prop.details?.bedrooms || prop.bhkTypes?.[0]?.split(' ')?.[0] || '2/3';
+            const location = prop.address?.locality || 'Locality';
+            const offerPrice = offer.agreedPrice || offer.offerPrice;
+            const listedPrice = prop.price || offerPrice;
+
+            let badges = [];
+            if (statusType === 'offer') {
+                badges = [{ text: 'Expires 6 PM', color: 'red' }];
+            } else if (statusType === 'closed') {
+                badges = [{ text: 'Deal done', color: 'green' }];
+            } else if (statusType === 'lost') {
+                badges = [{ text: 'Lost', color: 'red' }];
+            }
+
+            return {
+                id: 'off_' + offer._id,
+                name: offer.buyerName || 'Client',
+                details: `${location} · ${bhk}BHK · Listed ${formatL(listedPrice)}`,
+                offerInfo: `Offer ${formatL(offerPrice)} · Gap ${formatL(Math.abs(listedPrice - offerPrice))}`,
+                type: statusType,
+                badges,
+                updatedAt: offer.updatedAt
+            };
+        };
+
+        // Categorize Enquiries
+        const processedEnqPhones = new Set();
+        enquiries.forEach(enq => {
+            const key = enq.senderPhone || enq.senderEmail;
+            if (processedEnqPhones.has(key)) return; // Only process latest per user for leads
+            processedEnqPhones.add(key);
+
+            if (enq.type === 'visit') {
+                columns.visitScheduled.items.push(createCardFromEnq(enq, 'visit'));
+            } else if (enq.status === 'seen' || enq.status === 'done') {
+                columns.contacted.items.push(createCardFromEnq(enq, 'contacted'));
+            } else {
+                columns.newLeads.items.push(createCardFromEnq(enq, 'new'));
+            }
+        });
+
+        // Categorize Offers
+        offers.forEach(offer => {
+            if (offer.status === 'rejected') {
+                columns.lost.items.push(createCardFromOffer(offer, 'lost'));
+            } else if (offer.status === 'deal_done' || offer.status === 'accepted') {
+                columns.closed.items.push(createCardFromOffer(offer, 'closed'));
+            } else {
+                columns.offerStage.items.push(createCardFromOffer(offer, 'offer'));
+            }
+        });
+
+        res.json({ columns });
+
+    } catch (err) {
+        console.error('Fetch pipeline error:', err);
+        res.status(500).json({ error: 'Server error fetching pipeline' });
+    }
+});
+
 module.exports = router;

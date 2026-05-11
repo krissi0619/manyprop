@@ -295,18 +295,22 @@
 
 /* ── Responsive ──────────────────────────────────── */
 @media (max-width: 768px) {
-  .featured-projects { padding: 24px 0 16px; }
-  .section-title { font-size: 1.4rem !important; }
-  .section-header { flex-wrap: wrap; gap: 8px; }
+  .featured-projects { padding: 32px 0 20px; }
+  .section-title { font-size: 1.5rem !important; }
+  .section-header { flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 20px; }
 
   /* Shrink project cards on tablet */
-  .projects-scroll-container .project-card { min-width: 260px; max-width: 260px; }
-  .project-image { height: 160px; }
+  .projects-scroll-container .project-card { min-width: 280px; max-width: 280px; }
+  .project-image-container { height: 180px; }
   .projects-carousel-wrapper .carousel-arrow { display: none; }
+  .project-title { font-size: 1.15rem; }
+  .project-price-range { font-size: 1.15rem; }
 }
 
 @media (max-width: 480px) {
-  .section-title { font-size: 1.15rem !important; }
-  .projects-scroll-container .project-card { min-width: 220px; max-width: 220px; }
-  .project-image { height: 140px; }
+  .section-title { font-size: 1.25rem !important; }
+  .projects-scroll-container .project-card { min-width: 250px; max-width: 250px; }
+  .project-image-container { height: 160px; }
+  .project-content { padding: 14px; }
+  .project-footer { flex-direction: column; }
 }

@@ -31,7 +31,7 @@ const cities = [
     id: 5,
     name: 'Mumbai',
     propertyCount: '32+ Properties',
-    image: 'https://images.unsplash.com/photo-1595655310122-f56103d6c96d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
+    image: 'https://images.unsplash.com/photo-1570168007204-dfb528c6958f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
   },
 ];
 

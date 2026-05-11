@@ -7,8 +7,14 @@
   padding: 40px 0;
 }
 
+/* On mobile, the hero search card is no longer floated below with translateY.
+   We add a top padding to sections so they don't sit flush against the card. */
 @media (max-width: 768px) {
   .home .section {
-    padding: 28px 0;
+    padding: 24px 0;
+  }
+  /* Ensure the search card has breathing room below before rest of page */
+  .hero-section + * {
+    margin-top: 24px;
   }
 }

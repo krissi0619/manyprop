@@ -1,0 +1,22 @@
+# https://www.robotstxt.org/robotstxt.html
+# ManyProp Robots.txt
+
+User-agent: *
+Allow: /
+Allow: /home
+Allow: /properties
+Allow: /properties/*
+Disallow: /login
+Disallow: /register
+Disallow: /post-property
+Disallow: /compare
+Disallow: /profile
+Disallow: /make-offer/*
+Disallow: /admin/*
+Disallow: /api/*
+
+# Host
+Host: https://manyprop.onrender.com
+
+# Sitemap Location
+Sitemap: https://manyprop.onrender.com/sitemap.xml

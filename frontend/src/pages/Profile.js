@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import {
     FaUserEdit, FaHeart, FaBalanceScale, FaBell,
     FaList, FaEnvelope, FaSignOutAlt, FaBuilding,
-    FaMapMarkerAlt, FaTrash, FaEye, FaExchangeAlt, FaChartBar, FaChartLine
+    FaMapMarkerAlt, FaTrash, FaEye, FaExchangeAlt, FaChartBar, FaChartLine, FaFire, FaChartPie
 } from 'react-icons/fa';
 import axios from 'axios';
 import BuyerDashboard from '../components/Dashboard/BuyerDashboard';
 import SellerDashboard from '../components/Dashboard/SellerDashboard';
 import AgentDashboard from '../components/Dashboard/AgentDashboard';
 import MessagesTab from '../components/Dashboard/MessagesTab';
+import HotLeadsTab from '../components/Dashboard/HotLeadsTab';
+import PipelineTab from '../components/Dashboard/PipelineTab';
 import './Profile.css';
 
 /* ── ProfilePropertyRow — displays one saved / compare property ── */
@@ -180,6 +182,7 @@ const Profile = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [activeTab, setActiveTab] = useState('edit-profile');
+
     const [savedProps, setSavedProps] = useState([]);
     const [compareProps, setCompareProps] = useState([]);
     const [offers, setOffers] = useState([]);
@@ -436,9 +439,11 @@ const Profile = () => {
     const SELLER_TABS = [
         { id: 'edit-profile', icon: <FaUserEdit />, label: 'Edit Profile' },
         { id: 'dashboard', icon: <FaChartBar />, label: 'Dashboard Stats' },
+        ...(isAgent ? [{ id: 'hot-leads', icon: <FaFire />, label: 'Hot Leads' }] : []),
         { id: 'messages', icon: <FaEnvelope />, label: 'Messages & Chats' },
         { id: 'post-property', icon: <FaBuilding />, label: 'Post Property' },
         { id: 'listings', icon: <FaList />, label: 'Manage Listings' },
+        ...(isAgent ? [{ id: 'pipeline', icon: <FaChartPie />, label: 'Deal Pipeline' }] : []),
         { id: 'offers-received', icon: <FaBalanceScale />, label: 'Property Offers' },
         { id: 'enquiries', icon: <FaEnvelope />, label: 'View Enquiries' },
     ];
@@ -753,6 +758,14 @@ const Profile = () => {
 
                     {activeTab === 'messages' && (
                         <MessagesTab user={user} isOwner={isOwner} />
+                    )}
+
+                    {activeTab === 'hot-leads' && isAgent && (
+                        <HotLeadsTab user={user} API={API} />
+                    )}
+
+                    {activeTab === 'pipeline' && isAgent && (
+                        <PipelineTab user={user} API={API} />
                     )}
 
                     {activeTab === 'saved' && (

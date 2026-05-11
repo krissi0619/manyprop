@@ -9,6 +9,7 @@ import PopularCities from '../components/Home/PopularCities';
 import WhyChoose from '../components/Home/WhyChoose';
 import ToolsSection from '../components/Home/ToolsSection';
 import NewsSection from '../components/Home/NewsSection';
+import SEO from '../components/Common/SEO';
 import './Home.css';
 
 const Home = () => {
@@ -25,6 +26,11 @@ const Home = () => {
 
   return (
     <div className="home">
+      <SEO 
+        title="Find Flats, Villas, Apartments for Sale & Rent"
+        description="Search real estate properties in Pune, Baben, Lokhanda and major Indian cities. ManyProp brings you 100% verified owner listings, direct builder contacts, and zero brokerage."
+        keywords="verified apartments Pune, villas for sale, rent flats in Baben Lokhanda, zero brokerage property website, buy house India, ManyProp search"
+      />
       <HeroSection searchState={searchState} onSearchChange={handleSearchChange} />
       <QuickStats />
       <RecommendedProperties searchState={searchState} />

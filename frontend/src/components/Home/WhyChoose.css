@@ -157,11 +157,13 @@
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-    .why-choose-dark { padding: 28px 0 24px; }
-    .why-choose-content { flex-direction: column; align-items: flex-start; gap: 22px; }
-    .features-row { gap: 20px; }
-    .feature-item { flex-direction: row; text-align: left; gap: 12px; }
-    .cta-banner { flex-direction: column; text-align: center; gap: 16px; min-width: unset; width: 100%; }
+    .why-choose-dark { padding: 32px 16px 28px; }
+    .why-choose-content { flex-direction: column; align-items: center; text-align: center; gap: 24px; }
+    .why-choose-left { min-width: 100%; }
+    .why-choose-title { font-size: 1.5rem; margin-bottom: 24px; }
+    .features-row { justify-content: center; gap: 24px; }
+    .feature-item { flex-direction: column; text-align: center; gap: 10px; }
+    .cta-banner { flex-direction: column; text-align: center; gap: 16px; min-width: unset; width: 100%; padding: 20px; }
     .cta-text { align-items: center; }
     .cta-post-btn { width: 100%; justify-content: center; }
 }
