@@ -342,17 +342,17 @@
 
 @media (max-width: 768px) {
   .hero-section {
-    height: 340px;
-    margin-bottom: 0;
+    height: 280px;
+    margin-bottom: 160px; /* clear the translateY(50%) search card overlap */
     padding-bottom: 0;
-    align-items: center;
+    align-items: flex-end;
   }
 
-  /* Move search card out of hero transform — just a normal block below */
+  /* Keep search card overlapping bottom edge exactly like desktop */
   .hero-container {
-    transform: none;
+    transform: translateY(50%);
     padding: 0 12px;
-    padding-top: 60px; /* push below the floating pill */
+    padding-top: 0;
   }
 
   /* BUY / Rent / Sell pill — shrink it */
@@ -417,8 +417,17 @@
 }
 
 @media (max-width: 480px) {
-  .hero-section { height: 260px; }
-  .hero-container { padding-top: 50px; padding-left: 10px; padding-right: 10px; }
+  .hero-section {
+    height: 240px;
+    margin-bottom: 160px; /* clear the translateY(50%) search card overlap */
+    align-items: flex-end;
+  }
+  .hero-container {
+    transform: translateY(50%);
+    padding-top: 0;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
   .search-card { padding: 12px 10px 14px; }
   .nav-btn { font-size: 0.68rem; }
   .search-action-btn { font-size: 0.88rem; padding: 12px; }

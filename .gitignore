@@ -35,3 +35,6 @@ coverage/
 
 # ── Local MongoDB data (never commit) ────────────
 mongodb_data/
+
+# Local Netlify folder
+.netlify

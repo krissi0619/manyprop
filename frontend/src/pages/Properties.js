@@ -618,12 +618,31 @@ const Properties = () => {
     });
   }, [properties, areaSearchCenter]);
 
+  const propertiesSchema = {
+    "@context": "https://schema.org",
+    "@type": "SearchResultsPage",
+    "name": cityInput ? `Verified Properties in ${cityInput} | ManyProp` : "Search Properties | ManyProp",
+    "description": cityInput ? `List of verified properties, flats, apartments, and villas for sale or rent in ${cityInput}.` : "Search verified real estate listings on ManyProp.",
+    "url": typeof window !== 'undefined' ? window.location.href : '',
+    "mainEntity": {
+      "@type": "ItemList",
+      "numberOfItems": properties.length,
+      "itemListElement": properties.slice(0, 12).map((p, idx) => ({
+        "@type": "ListItem",
+        "position": idx + 1,
+        "url": `https://manyprop.onrender.com/properties/${p._id}`,
+        "name": p.title
+      }))
+    }
+  };
+
   return (
     <div className="properties-page">
       <SEO 
         title={cityInput ? `Verified Properties in ${cityInput} | Flats, Villas, Apartments` : "Search Verified Properties, Flats, Villas for Buy & Rent"}
         description={cityInput ? `Find the best verified properties, flats, apartments, and villas for sale or rent in ${cityInput} with zero brokerage. Connect directly with owners or agents on ManyProp.` : "Search thousands of direct owner listings including flats, apartments, villas and commercial properties with zero brokerage on ManyProp."}
         keywords={cityInput ? `properties in ${cityInput}, flats in ${cityInput}, apartments for sale ${cityInput}, direct owner homes ${cityInput}, zero brokerage` : "real estate listing, buy flats, rent apartments, villas for sale, no brokerage properties"}
+        schema={propertiesSchema}
       />
       {/* NEW TOP SEARCH PILL BAR */}
       <div className="design-top-search-bar">
@@ -854,7 +873,7 @@ const Properties = () => {
                                       {p.details?.bathrooms && <span><FaBath />{p.details.bathrooms}ba</span>}
                                       {p.details?.area && <span><FaRulerCombined />{p.details.area}sqft</span>}
                                     </div>
-                                    <button className="popup-view-btn" onClick={() => navigate(`/property/${p._id}`)}>
+                                    <button className="popup-view-btn" onClick={() => navigate(`/properties/${p._id}`)}>
                                       View Details →
                                     </button>
                                   </div>

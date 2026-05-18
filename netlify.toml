@@ -4,6 +4,12 @@
   publish = "build"
 
 [[redirects]]
+  from = "/sitemap.xml"
+  to = "https://manyprop-backend.onrender.com/sitemap.xml"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

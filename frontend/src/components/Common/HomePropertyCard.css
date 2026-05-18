@@ -233,7 +233,18 @@
   .project-card.home-property-card-override .project-image-container {
     height: 180px;
   }
-  .price-main { font-size: 1.2rem; }
+  .project-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .project-price-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .price-main { font-size: 1.2rem; white-space: nowrap; }
+  .price-sub, .price-area { font-size: 0.72rem; }
   .bhk-text { font-size: 0.95rem; }
 }
 

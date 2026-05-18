@@ -283,7 +283,65 @@
   .pc-img-wrap {
     width: 100%;
     min-width: unset;
-    height: 220px;
+    height: 240px;
+  }
+  .pc-info {
+    padding: 20px 24px;
+    gap: 14px;
+  }
+  .pc-title {
+    font-size: 1.25rem;
+  }
+  
+  /* Stack the footer elements so buttons never overflow */
+  .pc-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding-top: 14px;
+  }
+  .pc-agent {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  .pc-footer-btns {
+    width: 100%;
+    display: flex;
+    gap: 10px;
+  }
+  .pc-compare-btn, .pc-contact-btn {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+    padding: 11px 0;
+    font-size: 0.88rem;
+  }
+}
+
+@media (max-width: 500px) {
+  .pc-img-wrap {
+    height: 180px;
+  }
+  .pc-info {
+    padding: 16px;
+  }
+  .pc-price-main {
+    font-size: 1.45rem;
+  }
+  .pc-specs {
+    flex-wrap: wrap;
+    gap: 12px 6px;
+    padding: 12px 8px;
+    background: #fdfaf8;
+  }
+  .pc-spec-item {
+    flex: unset;
+    width: calc(33.33% - 4px);
+  }
+  .pc-spec-divider {
+    display: none !important;
   }
 }
 

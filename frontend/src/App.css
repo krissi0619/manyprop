@@ -10,17 +10,17 @@ main {
   flex: 1;
 }
 
-/* When fixed header is present → push main down by header height */
+/* When sticky header is present → elements occupy natural flow, no extra margin needed */
 .App.has-header main {
-  margin-top: 90px;
+  margin-top: 0;
 }
 
-/* When guest banner (40px) + header (90px) both present */
+/* When guest banner + header both present */
 .App.has-header.has-guest-banner main {
-  margin-top: 130px; /* 90px header + 40px guest banner */
+  margin-top: 0;
 }
 
-/* When guest banner present → header needs to be offset below it */
+/* When guest banner present → sticky header aligns cleanly below it in normal layout flow */
 .App.has-guest-banner .header {
-  top: 40px;
+  top: 0;
 }

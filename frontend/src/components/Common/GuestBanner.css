@@ -1,9 +1,6 @@
 /* GuestBanner — sticky top strip for guest users */
 .guest-banner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   z-index: 999;
   background: linear-gradient(90deg, #1a1a1a 0%, #2a1a0e 50%, #1a1a1a 100%);
   border-bottom: 1px solid rgba(232,92,39,0.3);
