@@ -62,30 +62,38 @@ router.post('/send-otp', async (req, res) => {
 
     if (targetEmail) {
       try {
-        const transporter = nodemailer.createTransport({
-          host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-          port: process.env.EMAIL_PORT || 587,
-          secure: false, // true for 465, false for other ports
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'api-key': process.env.BREVO_API_KEY,
+            'content-type': 'application/json'
           },
-        });
-
-        await transporter.sendMail({
-          from: `"ManyProp" <${process.env.EMAIL_USER}>`,
-          to: targetEmail,
-          subject: "Your ManyProp Login OTP",
-          html: `<div style="font-family: Arial, sans-serif; text-align: center; padding: 30px; background-color: #f9f9f9; border-radius: 10px;">
+          body: JSON.stringify({
+            sender: {
+              name: 'ManyProp',
+              email: process.env.EMAIL_FROM || 'noreply@manyprop.com'
+            },
+            to: [{ email: targetEmail }],
+            subject: 'Your ManyProp Login OTP',
+            htmlContent: `<div style="font-family: Arial, sans-serif; text-align: center; padding: 30px; background-color: #f9f9f9; border-radius: 10px;">
                   <h2 style="color: #333;">Welcome to ManyProp!</h2>
                   <p style="color: #666; font-size: 16px;">Your One-Time Password (OTP) for login is:</p>
                   <div style="margin: 20px 0; padding: 15px; background: #fff; border: 2px dashed #ea580c; display: inline-block; border-radius: 8px;">
                     <h1 style="color: #ea580c; letter-spacing: 5px; margin: 0; font-size: 32px;">${otp}</h1>
                   </div>
                   <p style="color: #888; font-size: 14px;">This OTP is valid for 10 minutes. Do not share it with anyone.</p>
-                 </div>`,
+                 </div>`
+          })
         });
-        console.log(`[Email] OTP sent to ${targetEmail}`);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Brevo API error:', errorData);
+          throw new Error('Failed to send OTP via Brevo');
+        }
+
+        console.log(`[Email] OTP sent to ${targetEmail} via Brevo`);
       } catch (emailError) {
         console.error('Failed to send email:', emailError.message);
       }
